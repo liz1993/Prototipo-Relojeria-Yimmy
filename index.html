@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Prototipado - Relojería Jimmy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 20px;
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+        }
+        h1 {
+            font-family: 'Playfair Display', serif;
+            color: #d4af37; /* Dorado */
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        input, button {
+            display: block;
+            margin: 15px 0;
+            padding: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #d4af37;
+            box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+        }
+        button {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        button i { margin-right: 8px; }
+        .back-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            margin-top: 10px;
+        }
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background: #d4af37; color: white; }
+        .alert {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 5px solid #d4af37;
+            display: flex;
+            align-items: center;
+        }
+        .nav { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
+        .nav button { width: auto; padding: 10px 15px; border-radius: 25px; font-size: 14px; }
+        .login-footer { text-align: center; margin-top: 15px; font-size: 14px; }
+        .login-footer a { color: #007bff; text-decoration: none; cursor: pointer; font-weight: 500; }
+        ul li { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #d4af37; list-style: none; }
+        
+        /* Estilo para la previsualización de imagen */
+        .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; vertical-align: middle; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-clock"></i> Relojería Jimmy</h1>
+        
+        <div id="sec-login" class="fade-in">
+            <h2><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</h2>
+            <input type="text" id="username" placeholder="Usuario">
+            <input type="password" id="password" placeholder="Contraseña">
+            <button onclick="login()"><i class="fas fa-lock"></i> Entrar</button>
+            <p id="login-error" class="hidden" style="color: red; text-align: center;"><i class="fas fa-exclamation-triangle"></i> Credenciales incorrectas.</p>
+            <div class="login-footer">
+                <p>¿No tienes cuenta? <a onclick="navigateTo('sec-registro')">Regístrate</a></p>
+                <p><a onclick="navigateTo('sec-recuperar')">Olvidé mi contraseña</a></p>
+            </div>
+        </div>
+
+        <div id="sec-registro" class="hidden fade-in">
+            <h2><i class="fas fa-user-plus"></i> Registro</h2>
+            <input type="text" id="reg-nombre" placeholder="Nombre completo">
+            <input type="text" id="reg-user" placeholder="Nombre de usuario deseado">
+            <input type="password" id="reg-pass" placeholder="Contraseña">
+            <button onclick="ejecutarRegistro()">Crear Cuenta</button>
+            <button class="back-btn" onclick="navigateTo('sec-login')">Volver</button>
+        </div>
+
+        <div id="sec-recuperar" class="hidden fade-in">
+            <h2><i class="fas fa-key"></i> Recuperar Acceso</h2>
+            <input type="email" placeholder="Tu correo electrónico">
+            <button onclick="alert('Enlace enviado'); navigateTo('sec-login')">Enviar Enlace</button>
+            <button class="back-btn" onclick="navigateTo('sec-login')">Volver</button>
+        </div>
+
+        <div id="sec-dashboard" class="hidden fade-in">
+            <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+            <p id="msg-bienvenida" style="font-weight: 500; color: #d4af37;"></p>
+            <div class="alert">
+                <i class="fas fa-bell"></i>
+                <span style="margin-left:10px">Alertas: Entrega pendiente: Reloj XYZ. Inventario bajo: Repuesto ABC.</span>
+            </div>
+            <div class="nav">
+                <button onclick="navigateTo('sec-ventas')"><i class="fas fa-shopping-cart"></i> Ventas</button>
+                <button onclick="navigateTo('sec-inventario')"><i class="fas fa-boxes"></i> Inventario</button>
+                <button onclick="navigateTo('sec-reparaciones')"><i class="fas fa-tools"></i> Reparaciones</button>
+                <button onclick="navigateTo('sec-consulta')"><i class="fas fa-search"></i> Consulta</button>
+                <button id="reportes-btn" class="hidden" onclick="navigateTo('sec-reportes')"><i class="fas fa-chart-bar"></i> Reportes</button>
+                <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+            </div>
+        </div>
+
+        <div id="sec-ventas" class="hidden fade-in">
+            <h2>Ventas</h2>
+            <input type="text" id="v-prod" placeholder="Producto">
+            <input type="number" id="v-cant" placeholder="Cantidad">
+            <input type="number" id="v-val" placeholder="Valor">
+            <button onclick="regVenta()">Guardar Venta</button>
+            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+            <ul id="lista-ventas"></ul>
+        </div>
+
+        <div id="sec-inventario" class="hidden fade-in">
+            <h2>Inventario</h2>
+            <input type="text" id="busc-inv" placeholder="Buscar producto..." onkeyup="buscInv()">
+            <table id="tab-inv">
+                <tr><th>Código</th><th>Descripción</th><th>Cant.</th><th>Precio</th></tr>
+                <tr><td>001</td><td>Reloj Rolex</td><td>10</td><td>$1000</td></tr>
+                <tr><td>002</td><td>Repuesto B</td><td>2</td><td>$50</td></tr>
+            </table>
+            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+        </div>
+
+        <div id="sec-reparaciones" class="hidden fade-in">
+            <h2>Reparaciones</h2>
+            <input type="text" id="r-cli" placeholder="Cliente">
+            <input type="text" id="r-mod" placeholder="Modelo">
+            <input type="number" id="r-val-total" placeholder="Valor Total ($)">
+            <input type="number" id="r-abono" placeholder="Abono ($)">
+            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">Foto del reloj:</label>
+            <input type="file" id="r-foto" accept="image/*">
+            <input type="date" id="r-fec">
+            <button onclick="regRep()">Registrar</button>
+            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+            <ul id="lista-reps"></ul>
+        </div>
+
+        <div id="sec-consulta" class="hidden fade-in">
+            <h2>Consulta de Estado</h2>
+            <input type="text" id="c-id" placeholder="Nombre o ID">
+            <button onclick="document.getElementById('res-c').innerText = 'Estado: En proceso para ' + document.getElementById('c-id').value">Consultar</button>
+            <p id="res-c" style="margin-top:10px; font-weight:bold"></p>
+            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+        </div>
+
+        <div id="sec-reportes" class="hidden fade-in">
+            <h2>Reportes Mensuales</h2>
+            <p>Ventas totales: $5000. Servicios: 10.</p>
+            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+        </div>
+    </div>
+
+    <script>
+        let usuariosDB = [
+            { user: 'propietario', pass: '123', tipo: 'admin' },
+            { user: 'empleada', pass: '123', tipo: 'empleado' }
+        ];
+
+        function navigateTo(id) {
+            document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function ejecutarRegistro() {
+            const nuevoUser = document.getElementById('reg-user').value;
+            const nuevoPass = document.getElementById('reg-pass').value;
+            if(nuevoUser === "" || nuevoPass === "") {
+                alert("Por favor rellena los campos");
+                return;
+            }
+            usuariosDB.push({ user: nuevoUser, pass: nuevoPass, tipo: 'empleado' });
+            alert('¡Usuario ' + nuevoUser + ' registrado con éxito!');
+            navigateTo('sec-login');
+        }
+
+        function login() {
+            const uInput = document.getElementById('username').value;
+            const pInput = document.getElementById('password').value;
+            const usuarioEncontrado = usuariosDB.find(u => u.user === uInput && u.pass === pInput);
+
+            if (usuarioEncontrado) {
+                document.getElementById('login-error').classList.add('hidden');
+                document.getElementById('msg-bienvenida').innerText = "Bienvenido/a, " + uInput;
+                navigateTo('sec-dashboard');
+                if(usuarioEncontrado.tipo === 'admin') {
+                    document.getElementById('reportes-btn').classList.remove('hidden');
+                } else {
+                    document.getElementById('reportes-btn').classList.add('hidden');
+                }
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            navigateTo('sec-login');
+        }
+
+        function regVenta() {
+            const p = document.getElementById('v-prod').value;
+            if(p) {
+                const li = document.createElement('li');
+                li.innerText = "Vendido: " + p;
+                document.getElementById('lista-ventas').appendChild(li);
+                alert("Venta guardada");
+            }
+        }
+
+        // FUNCIÓN DE REPARACIÓN CON FOTO Y VALORES (SIN TOCAR LOGIN)
+        function regRep() {
+            const c = document.getElementById('r-cli').value;
+            const m = document.getElementById('r-mod').value;
+            const v = document.getElementById('r-val-total').value || 0;
+            const a = document.getElementById('r-abono').value || 0;
+            const saldo = v - a;
+            const fotoInput = document.getElementById('r-foto');
+
+            if(c) {
+                const li = document.createElement('li');
+                let imgHtml = "";
+                
+                // Si hay foto, crear previsualización
+                if (fotoInput.files && fotoInput.files[0]) {
+                    const url = URL.createObjectURL(fotoInput.files[0]);
+                    imgHtml = `<img src="${url}" class="img-preview">`;
+                }
+
+                li.innerHTML = `${imgHtml} <strong>Cliente:</strong> ${c} | <strong>Reloj:</strong> ${m} <br> 
+                                Total: $${v} | Abono: $${a} | <span style="color:red">Saldo: $${saldo}</span>`;
+                
+                document.getElementById('lista-reps').appendChild(li);
+                alert("Reparación registrada");
+                
+                // Limpiar campos
+                document.getElementById('r-cli').value = "";
+                document.getElementById('r-mod').value = "";
+                document.getElementById('r-val-total').value = "";
+                document.getElementById('r-abono').value = "";
+                document.getElementById('r-foto').value = "";
+            }
+        }
+
+        function buscInv() {
+            let q = document.getElementById('busc-inv').value.toLowerCase();
+            let rows = document.querySelectorAll('#tab-inv tr');
+            rows.forEach((r, i) => {
+                if(i>0) r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>
