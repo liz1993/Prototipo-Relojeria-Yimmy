@@ -6,8 +6,14 @@ use App\Models\Inventario;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
+/**
+ * CRUD de productos del catálogo. Todo aquí respeta la sucursal: un
+ * empleado solo ve/crea en la suya, un admin ve todas y elige a cuál
+ * escribir.
+ */
 class InventarioController extends Controller
 {
+    /** Lista el inventario, filtrado por sucursal (forzado para empleado, opcional para admin). */
     public function index(Request $request)
     {
         $query = Inventario::query();
@@ -31,6 +37,7 @@ class InventarioController extends Controller
         return $items;
     }
 
+    /** Crea un producto (admin, ya que exige sucursal_id explícito). */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -52,6 +59,7 @@ class InventarioController extends Controller
         return response()->json($item, 201);
     }
 
+    /** Edita un producto existente (mismas reglas que store). */
     public function update(Request $request, Inventario $inventario)
     {
         $data = $request->validate([
@@ -73,6 +81,7 @@ class InventarioController extends Controller
         return response()->json($inventario);
     }
 
+    /** Borrado suave: el producto pasa a la papelera, no desaparece de la base. */
     public function destroy(Inventario $inventario)
     {
         $inventario->delete();

@@ -23,6 +23,7 @@ let usuariosPagina = 1;
 let cierresCompleto = [];
 let cierresPagina = 1;
 
+// Ejecuta una acción async mostrando texto de "cargando" en el botón y deshabilitándolo mientras dura, para evitar doble clic.
 async function conBotonCargando(btn, textoCargando, accion) {
     const htmlOriginal = btn.innerHTML;
     btn.disabled = true;
@@ -35,6 +36,7 @@ async function conBotonCargando(btn, textoCargando, accion) {
     }
 }
 
+// Alterna un input de contraseña entre oculto/visible (el "ojito"), reutilizable en cualquier campo de password.
 function togglePassword(inputId, btn) {
     const input = document.getElementById(inputId);
     const oculto = input.type === 'password';
@@ -46,15 +48,18 @@ function togglePassword(inputId, btn) {
         : '<i class="fas fa-eye" aria-hidden="true"></i>';
 }
 
+// true si hay sesión activa y es de tipo admin. Es la base de todos los permisos del lado del frontend.
 function esAdmin() {
     return !!sesionActual && sesionActual.tipo === 'admin';
 }
 
+// Recorta un arreglo a los items que corresponden a una página (según TAMANO_PAGINA).
 function paginar(items, pagina) {
     const inicio = (pagina - 1) * TAMANO_PAGINA;
     return items.slice(inicio, inicio + TAMANO_PAGINA);
 }
 
+// Dibuja los botones Anterior/Siguiente + "Página X de Y" para cualquier lista paginada.
 function renderPaginacion(contenedorId, totalItems, paginaActual, irAPagina) {
     const contenedor = document.getElementById(contenedorId);
     contenedor.innerHTML = '';
@@ -84,6 +89,7 @@ function renderPaginacion(contenedorId, totalItems, paginaActual, irAPagina) {
     contenedor.appendChild(nav);
 }
 
+// Crea un <option> de select con el value/texto dados.
 function crearOpcion(valor, texto) {
     const opt = document.createElement('option');
     opt.value = valor;
@@ -91,6 +97,7 @@ function crearOpcion(valor, texto) {
     return opt;
 }
 
+// Trae la lista de sucursales desde la API y llena todos los <select> que dependen de ella.
 async function cargarSucursales() {
     try {
         sucursalesCache = await apiFetch('/sucursales');
@@ -100,6 +107,7 @@ async function cargarSucursales() {
     poblarSelectoresSucursal();
 }
 
+// Llena con sucursalesCache los distintos <select> de sucursal de toda la app (registro, sucursal activa, filtros).
 function poblarSelectoresSucursal() {
     ['reg-sucursal', 'usu-sucursal'].forEach(id => {
         const sel = document.getElementById(id);
@@ -128,20 +136,26 @@ function poblarSelectoresSucursal() {
     });
 }
 
+// Lee el token de sesión guardado en localStorage.
 function getToken() {
     return localStorage.getItem('rj_token');
 }
 
+// Guarda el token y los datos del usuario en localStorage al iniciar sesión.
 function guardarSesion(token, user) {
     localStorage.setItem('rj_token', token);
     localStorage.setItem('rj_user', JSON.stringify(user));
 }
 
+// Borra el token y los datos del usuario de localStorage (logout real).
 function limpiarSesion() {
     localStorage.removeItem('rj_token');
     localStorage.removeItem('rj_user');
 }
 
+// Wrapper de fetch() para toda la API: agrega el header Authorization con el token,
+// serializa el body a JSON (salvo que sea FormData), y convierte cualquier respuesta
+// no-OK en un Error con .message y .status legibles por quien lo llama.
 async function apiFetch(path, options = {}) {
     const headers = { Accept: 'application/json', ...(options.headers || {}) };
     const token = getToken();
@@ -174,6 +188,7 @@ async function apiFetch(path, options = {}) {
     return res.json();
 }
 
+// Router simple: oculta todas las .screen y muestra la pedida, disparando la carga de datos de esa sección si aplica.
 function navigateTo(id) {
     document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
@@ -188,6 +203,7 @@ function navigateTo(id) {
     if (id === 'sec-mantenimiento') { cargarPapelera(); cargarSolicitudesPassword(); }
 }
 
+// Muestra/oculta en el DOM los botones y controles exclusivos de admin, según esAdmin().
 function aplicarPermisos() {
     document.getElementById('reportes-btn').classList.toggle('hidden', !esAdmin());
     document.getElementById('sucursales-btn').classList.toggle('hidden', !esAdmin());
@@ -200,6 +216,7 @@ function aplicarPermisos() {
     document.getElementById('r-sucursal-activa').classList.toggle('hidden', !esAdmin());
 }
 
+// Se llama justo después de iniciar sesión (o restaurarla): guarda el usuario actual, aplica permisos y navega al dashboard.
 function mostrarDashboard(user) {
     document.getElementById('cargando-sesion').classList.add('hidden');
     sesionActual = user;
@@ -211,6 +228,7 @@ function mostrarDashboard(user) {
     cargarAlertas();
 }
 
+// Arma el texto de alertas del dashboard (stock bajo, reparaciones pendientes y, si es admin, solicitudes de contraseña).
 async function cargarAlertas() {
     const el = document.getElementById('alertas-texto');
     try {
@@ -229,6 +247,9 @@ async function cargarAlertas() {
     }
 }
 
+// Se ejecuta al cargar la página: si hay un token guardado, intenta restaurar la sesión
+// pidiendo el usuario actual a la API. Solo borra el token en un 401 real; cualquier otro
+// error (ej. backend caído un momento) muestra un aviso de "reintentar" en vez de cerrar sesión.
 async function restaurarSesion() {
     if (!getToken()) return;
 
@@ -262,6 +283,7 @@ async function restaurarSesion() {
     }
 }
 
+// Reemplaza la pantalla de "Cargando sesión..." por un aviso con botón "Reintentar" cuando restaurarSesion() falla por conexión (no por token inválido).
 function mostrarErrorConexionSesion() {
     const el = document.getElementById('cargando-sesion');
     el.innerHTML = '';
@@ -280,6 +302,7 @@ function mostrarErrorConexionSesion() {
     el.append(p, btn);
 }
 
+// Valida el formulario de registro (campos completos, contraseñas iguales) y crea la cuenta vía POST /register.
 async function ejecutarRegistro() {
     const nombre = document.getElementById('reg-nombre').value;
     const nuevoUser = document.getElementById('reg-user').value;
@@ -310,6 +333,7 @@ async function ejecutarRegistro() {
     }
 }
 
+// Envía usuario/contraseña a POST /login; si funciona guarda la sesión y muestra el dashboard, si no muestra el error real (credenciales, límite de intentos, etc).
 async function login() {
     const eInput = document.getElementById('login-email').value;
     const pInput = document.getElementById('password').value;
@@ -328,6 +352,7 @@ async function login() {
     }
 }
 
+// Cierra sesión: borra el token local de inmediato (sin esperar al servidor) y vuelve al login.
 function logout() {
     // No se espera la respuesta del servidor: cerrar sesión localmente (borrar
     // el token guardado) es lo que de verdad importa para el usuario y no
@@ -342,6 +367,7 @@ function logout() {
     navigateTo('sec-login');
 }
 
+// Envía el formulario de "olvidé mi contraseña" (solo el username) a la API.
 async function recuperarAcceso(event) {
     event.preventDefault();
     const username = document.getElementById('rec-usuario').value.trim();
@@ -356,6 +382,7 @@ async function recuperarAcceso(event) {
     }
 }
 
+// Busca reparaciones por cliente o id (pantalla pública de Consulta de Estado) y pinta los resultados.
 async function consultarEstado(event) {
     event.preventDefault();
     const q = document.getElementById('c-id').value;
@@ -369,6 +396,7 @@ async function consultarEstado(event) {
     }
 }
 
+// Dibuja la lista de reparaciones encontradas por consultarEstado(), con foto, datos y estado.
 function renderResultadosConsulta(reps, q) {
     const resEl = document.getElementById('res-c');
     resEl.innerHTML = '';
@@ -438,6 +466,7 @@ function renderResultadosConsulta(reps, q) {
     resEl.appendChild(ul);
 }
 
+// Crea un botón de "Eliminar" (icono de basura) reutilizable, con su etiqueta accesible y su acción de click.
 function crearBotonEliminar(etiqueta, onClick) {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -448,6 +477,7 @@ function crearBotonEliminar(etiqueta, onClick) {
     return btn;
 }
 
+// Crea un botón de "Editar" (icono de lápiz) reutilizable, con su etiqueta accesible y su acción de click.
 function crearBotonEditar(etiqueta, onClick) {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -460,6 +490,7 @@ function crearBotonEditar(etiqueta, onClick) {
 
 /* ---------- Inventario ---------- */
 
+// Trae el inventario desde la API (filtrado por sucursal si es admin y eligió una) y lo pinta en la tabla.
 async function cargarInventario() {
     try {
         let path = '/inventario';
@@ -473,6 +504,7 @@ async function cargarInventario() {
     } catch (err) { /* deja la tabla como estaba si falla la carga */ }
 }
 
+// Dibuja la tabla de Inventario: aplica el filtro de búsqueda, pagina, y agrega la columna Costo y los botones Editar/Eliminar solo si es admin.
 function renderInventario() {
     const q = document.getElementById('busc-inv').value.toLowerCase();
     const filtrados = q
@@ -524,6 +556,7 @@ function renderInventario() {
     });
 }
 
+// Precarga el formulario de Inventario con los datos del producto elegido, para editarlo.
 function editarProducto(item) {
     document.getElementById('inv-edit-id').value = item.id;
     document.getElementById('inv-codigo').value = item.codigo;
@@ -536,6 +569,7 @@ function editarProducto(item) {
     document.getElementById('inv-cancelar-btn').classList.remove('hidden');
 }
 
+// Limpia el formulario de Inventario y lo vuelve al modo "Agregar producto" (sale del modo edición).
 function cancelarEdicionProducto() {
     document.getElementById('form-inventario').reset();
     document.getElementById('inv-edit-id').value = '';
@@ -543,6 +577,7 @@ function cancelarEdicionProducto() {
     document.getElementById('inv-cancelar-btn').classList.add('hidden');
 }
 
+// Envía el formulario de Inventario (crea o edita según haya un id en edición), como multipart/form-data por la foto.
 async function agregarProducto() {
     const codigo = document.getElementById('inv-codigo').value.trim();
     const descripcion = document.getElementById('inv-desc').value.trim();
@@ -581,6 +616,7 @@ async function agregarProducto() {
     });
 }
 
+// Pide confirmación y borra (soft delete) un producto del inventario.
 async function eliminarProducto(id) {
     if (!confirm('¿Eliminar este producto?')) return;
     try {
@@ -591,6 +627,7 @@ async function eliminarProducto(id) {
     }
 }
 
+// Se dispara al escribir en el buscador de Inventario: resetea a la página 1 y vuelve a dibujar la tabla filtrada.
 function buscInv() {
     inventarioPagina = 1;
     renderInventario();
@@ -598,6 +635,7 @@ function buscInv() {
 
 /* ---------- Ventas ---------- */
 
+// Trae las ventas desde la API y las pinta en la tabla.
 async function cargarVentas() {
     try {
         ventasCompleto = await apiFetch('/ventas');
@@ -606,6 +644,7 @@ async function cargarVentas() {
     } catch (err) { /* deja la lista como estaba si falla la carga */ }
 }
 
+// Llena el <select> de "producto del inventario" en el formulario de Ventas, solo con productos que tengan stock.
 async function cargarInventarioParaVentas() {
     const select = document.getElementById('v-inv-select');
     try {
@@ -630,6 +669,7 @@ async function cargarInventarioParaVentas() {
     } catch (err) { /* deja el select como estaba si falla la carga */ }
 }
 
+// Al elegir un producto del inventario en Ventas, autocompleta descripción y precio en el formulario.
 function seleccionarProductoVenta() {
     const select = document.getElementById('v-inv-select');
     const opt = select.selectedOptions[0];
@@ -643,6 +683,7 @@ function seleccionarProductoVenta() {
     if (!document.getElementById('v-cant').value) document.getElementById('v-cant').value = 1;
 }
 
+// Dibuja la tabla de Ventas, con botones Editar/Eliminar solo para admin.
 function renderVentas() {
     const tbody = document.querySelector('#tab-ventas tbody');
     tbody.innerHTML = '';
@@ -672,6 +713,7 @@ function renderVentas() {
     });
 }
 
+// Precarga el formulario de Ventas con los datos de la venta elegida.
 function editarVenta(v) {
     document.getElementById('v-edit-id').value = v.id;
     document.getElementById('v-inventario-id').value = '';
@@ -683,6 +725,7 @@ function editarVenta(v) {
     document.getElementById('v-cancelar-btn').classList.remove('hidden');
 }
 
+// Limpia el formulario de Ventas y sale del modo edición.
 function cancelarEdicionVenta() {
     document.getElementById('form-ventas').reset();
     document.getElementById('v-edit-id').value = '';
@@ -690,6 +733,7 @@ function cancelarEdicionVenta() {
     document.getElementById('v-cancelar-btn').classList.add('hidden');
 }
 
+// Envía el formulario de Ventas (crea o edita según corresponda).
 async function regVenta() {
     const p = document.getElementById('v-prod').value.trim();
     if (!p) return;
@@ -719,6 +763,7 @@ async function regVenta() {
     });
 }
 
+// Pide confirmación y borra una venta (restaura el stock si estaba ligada a un producto).
 async function eliminarVenta(id) {
     if (!confirm('¿Eliminar esta venta?')) return;
     try {
@@ -732,6 +777,7 @@ async function eliminarVenta(id) {
 
 /* ---------- Reparaciones ---------- */
 
+// Trae las reparaciones desde la API y las pinta en la lista.
 async function cargarReparaciones() {
     try {
         reparacionesCompleto = await apiFetch('/reparaciones');
@@ -740,6 +786,7 @@ async function cargarReparaciones() {
     } catch (err) { /* deja la lista como estaba si falla la carga */ }
 }
 
+// Crea el <select> de estado (pendiente/en_proceso/listo/entregado) de una reparación, con su evento de cambio.
 function crearSelectEstado(reparacion) {
     const select = document.createElement('select');
     select.className = 'estado-select';
@@ -755,6 +802,7 @@ function crearSelectEstado(reparacion) {
     return select;
 }
 
+// Dibuja la lista de Reparaciones: foto, datos, saldo, selector de estado y campo de observaciones (editable por cualquier rol), y botones Editar/Eliminar solo para admin.
 function renderReparaciones() {
     const filtro = document.getElementById('filtro-estado-rep').value;
     const filtrados = filtro ? reparacionesCompleto.filter(r => r.estado === filtro) : reparacionesCompleto;
@@ -832,6 +880,7 @@ function renderReparaciones() {
     });
 }
 
+// Guarda el nuevo estado elegido en el select, reenviando también los demás campos que la validación de admin exige en el backend.
 async function cambiarEstadoReparacion(reparacion, nuevoEstado) {
     try {
         await apiFetch('/reparaciones/' + reparacion.id, {
@@ -856,6 +905,7 @@ async function cambiarEstadoReparacion(reparacion, nuevoEstado) {
 // observaciones la puede actualizar cualquiera que atienda la reparación, igual
 // que el estado — por eso tiene su propio control inline en vez de requerir el
 // botón "Editar" (que solo ven los admin).
+// Guarda el texto de observaciones de una reparación (lo puede escribir cualquier rol).
 async function guardarObservaciones(reparacion, texto) {
     try {
         await apiFetch('/reparaciones/' + reparacion.id, {
@@ -877,6 +927,7 @@ async function guardarObservaciones(reparacion, texto) {
     cargarReparaciones();
 }
 
+// Precarga el formulario de Reparaciones con los datos del registro elegido (solo admin).
 function editarReparacion(item) {
     reparacionEditando = item;
     document.getElementById('r-edit-id').value = item.id;
@@ -892,6 +943,7 @@ function editarReparacion(item) {
     document.getElementById('r-cancelar-btn').classList.remove('hidden');
 }
 
+// Limpia el formulario de Reparaciones y sale del modo edición.
 function cancelarEdicionReparacion() {
     reparacionEditando = null;
     document.getElementById('form-reparaciones').reset();
@@ -900,6 +952,7 @@ function cancelarEdicionReparacion() {
     document.getElementById('r-cancelar-btn').classList.add('hidden');
 }
 
+// Envía el formulario de Reparaciones (crea o edita), como multipart/form-data por la foto.
 async function regRep() {
     const c = document.getElementById('r-cli').value.trim();
     if (!c) return;
@@ -939,11 +992,13 @@ async function regRep() {
     });
 }
 
+// Aplica el filtro de estado sobre la lista completa ya cargada y vuelve a paginar/dibujar.
 function filtrarReparaciones() {
     reparacionesPagina = 1;
     renderReparaciones();
 }
 
+// Pide confirmación y borra (soft delete) una reparación (solo admin).
 async function eliminarReparacion(id) {
     if (!confirm('¿Eliminar esta reparación?')) return;
     try {
@@ -956,6 +1011,7 @@ async function eliminarReparacion(id) {
 
 /* ---------- Reportes ---------- */
 
+// Trae las estadísticas agregadas (ventas, reparaciones, inventario) y las pinta en las tarjetas de Reportes; si no es admin, muestra un aviso en vez de la data.
 async function cargarReportes() {
     const el = document.getElementById('reportes-contenido');
     if (!esAdmin()) {
@@ -1033,12 +1089,14 @@ async function cargarReportes() {
 
 /* ---------- Sucursales ---------- */
 
+// Trae las sucursales para la pantalla de administración (sec-sucursales) y las pinta en la lista.
 async function cargarSucursalesAdmin() {
     try {
         renderSucursales(await apiFetch('/sucursales'));
     } catch (err) { /* deja la lista como estaba si falla la carga */ }
 }
 
+// Dibuja la lista de sucursales con su botón Editar.
 function renderSucursales(items) {
     const ul = document.getElementById('lista-sucursales');
     ul.innerHTML = '';
@@ -1060,6 +1118,7 @@ function renderSucursales(items) {
     });
 }
 
+// Precarga el formulario de Sucursales con los datos de la sucursal elegida.
 function editarSucursal(s) {
     document.getElementById('suc-edit-id').value = s.id;
     document.getElementById('suc-nombre').value = s.nombre;
@@ -1069,6 +1128,7 @@ function editarSucursal(s) {
     document.getElementById('suc-cancelar-btn').classList.remove('hidden');
 }
 
+// Limpia el formulario de Sucursales y sale del modo edición.
 function cancelarEdicionSucursal() {
     document.getElementById('form-sucursal').reset();
     document.getElementById('suc-edit-id').value = '';
@@ -1076,6 +1136,7 @@ function cancelarEdicionSucursal() {
     document.getElementById('suc-cancelar-btn').classList.add('hidden');
 }
 
+// Envía el formulario de Sucursales (crea o edita).
 async function guardarSucursal() {
     const nombre = document.getElementById('suc-nombre').value.trim();
     if (!nombre) return;
@@ -1102,11 +1163,13 @@ async function guardarSucursal() {
 
 /* ---------- Usuarios ---------- */
 
+// Muestra u oculta el selector de sucursal en el formulario de Usuarios según el tipo elegido (admin no necesita sucursal).
 function actualizarVisibilidadSucursalUsuario() {
     const esEmpleado = document.getElementById('usu-tipo').value === 'empleado';
     document.getElementById('usu-sucursal').classList.toggle('hidden', !esEmpleado);
 }
 
+// Trae los usuarios del sistema y los pinta en la lista de administración.
 async function cargarUsuariosAdmin() {
     try {
         usuariosCompleto = await apiFetch('/usuarios');
@@ -1115,6 +1178,7 @@ async function cargarUsuariosAdmin() {
     } catch (err) { /* deja la lista como estaba si falla la carga */ }
 }
 
+// Dibuja la lista de usuarios con su botón Editar.
 function renderUsuarios() {
     const ul = document.getElementById('lista-usuarios');
     ul.innerHTML = '';
@@ -1140,6 +1204,7 @@ function renderUsuarios() {
     });
 }
 
+// Precarga el formulario de Usuarios con los datos del usuario elegido (la contraseña se deja vacía a propósito).
 function editarUsuario(u) {
     document.getElementById('usu-edit-id').value = u.id;
     document.getElementById('usu-nombre').value = u.name;
@@ -1153,6 +1218,7 @@ function editarUsuario(u) {
     document.getElementById('usu-cancelar-btn').classList.remove('hidden');
 }
 
+// Limpia el formulario de Usuarios y sale del modo edición.
 function cancelarEdicionUsuario() {
     document.getElementById('form-usuario').reset();
     document.getElementById('usu-edit-id').value = '';
@@ -1162,6 +1228,7 @@ function cancelarEdicionUsuario() {
     document.getElementById('usu-cancelar-btn').classList.add('hidden');
 }
 
+// Envía el formulario de Usuarios (crea o edita); si la contraseña quedó vacía en una edición, no se manda (no se cambia).
 async function guardarUsuario() {
     const nombre = document.getElementById('usu-nombre').value.trim();
     const username = document.getElementById('usu-username').value.trim();
@@ -1198,6 +1265,7 @@ async function guardarUsuario() {
 
 /* ---------- Cierres Diarios ---------- */
 
+// Arma el query string de sucursal para las llamadas de Cierres Diarios.
 function parametrosCierre() {
     const params = [];
     const sucursalId = document.getElementById('cierre-sucursal').value;
@@ -1209,6 +1277,7 @@ function parametrosCierre() {
     return params;
 }
 
+// Trae los totales de ventas por día y los pinta en la tabla de Cierres Diarios.
 async function cargarCierres() {
     document.getElementById('cierre-detalle').innerHTML = '';
     try {
@@ -1222,6 +1291,7 @@ async function cargarCierres() {
     }
 }
 
+// Dibuja la tabla de Cierres Diarios (un renglón por día, con su total).
 function renderCierres() {
     const tbody = document.querySelector('#tab-cierres tbody');
     tbody.innerHTML = '';
@@ -1248,6 +1318,7 @@ function renderCierres() {
     });
 }
 
+// Trae y muestra el detalle de ventas de un día puntual (al hacer click sobre esa fila).
 async function verDetalleDia(dia) {
     const cont = document.getElementById('cierre-detalle');
     cont.textContent = 'Cargando...';
@@ -1260,6 +1331,7 @@ async function verDetalleDia(dia) {
     }
 }
 
+// Dibuja el detalle de ventas de un día específico.
 function renderDetalleDia(dia, ventas) {
     const cont = document.getElementById('cierre-detalle');
     cont.innerHTML = '';
@@ -1291,6 +1363,7 @@ function renderDetalleDia(dia, ventas) {
     cont.appendChild(totalP);
 }
 
+// Descarga el CSV de ventas del rango de fechas elegido. Usa fetch manual (no apiFetch) porque la respuesta es un archivo, no JSON.
 async function exportarVentasCSV() {
     const desde = document.getElementById('cierre-desde').value;
     const hasta = document.getElementById('cierre-hasta').value;
@@ -1321,6 +1394,7 @@ async function exportarVentasCSV() {
 
 /* ---------- Mantenimiento (Papelera + Backup) ---------- */
 
+// Trae los registros eliminados (inventario/ventas/reparaciones) y los pinta en la Papelera.
 async function cargarPapelera() {
     const ul = document.getElementById('lista-papelera');
     try {
@@ -1334,6 +1408,7 @@ async function cargarPapelera() {
 
 const ETIQUETAS_PAPELERA = { inventario: 'Producto', ventas: 'Venta', reparaciones: 'Reparación' };
 
+// Dibuja la lista de la Papelera con su botón Restaurar.
 function renderPapelera(items) {
     const ul = document.getElementById('lista-papelera');
     ul.innerHTML = '';
@@ -1365,6 +1440,7 @@ function renderPapelera(items) {
     });
 }
 
+// Restaura un registro eliminado de vuelta a su lista normal.
 async function restaurarDePapelera(tipo, id) {
     try {
         await apiFetch('/papelera/' + tipo + '/' + id + '/restaurar', { method: 'POST' });
@@ -1374,6 +1450,7 @@ async function restaurarDePapelera(tipo, id) {
     }
 }
 
+// Descarga el respaldo SQL completo de la base de datos. También usa fetch manual por ser un archivo.
 async function descargarBackup() {
     try {
         const res = await fetch(API_BASE + '/backup/exportar', { headers: { Authorization: 'Bearer ' + getToken() } });
@@ -1395,6 +1472,7 @@ async function descargarBackup() {
 
 /* ---------- Solicitudes de recuperación de contraseña ---------- */
 
+// Trae las solicitudes pendientes de "olvidé mi contraseña" para la pantalla de Mantenimiento.
 async function cargarSolicitudesPassword() {
     const ul = document.getElementById('lista-solicitudes-password');
     try {
@@ -1404,6 +1482,7 @@ async function cargarSolicitudesPassword() {
     }
 }
 
+// Dibuja la lista de solicitudes de recuperación de contraseña con su botón "Marcar atendida".
 function renderSolicitudesPassword(solicitudes) {
     const ul = document.getElementById('lista-solicitudes-password');
     ul.innerHTML = '';
@@ -1433,6 +1512,7 @@ function renderSolicitudesPassword(solicitudes) {
     });
 }
 
+// Marca una solicitud de recuperación de contraseña como resuelta.
 async function atenderSolicitudPassword(id) {
     try {
         await apiFetch('/solicitudes-password/' + id + '/atender', { method: 'POST' });

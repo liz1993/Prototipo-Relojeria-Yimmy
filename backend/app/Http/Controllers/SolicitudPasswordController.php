@@ -6,6 +6,7 @@ use App\Models\SolicitudPassword;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+/** Flujo de "olvidé mi contraseña": el usuario avisa, el admin lo atiende a mano. Ver SolicitudPassword y UserController. */
 class SolicitudPasswordController extends Controller
 {
     /**
@@ -32,6 +33,7 @@ class SolicitudPasswordController extends Controller
         ]);
     }
 
+    /** Lista de solicitudes pendientes (solo admin), para la pantalla de Mantenimiento. */
     public function index()
     {
         return SolicitudPassword::with('user:id,name,username')
@@ -40,6 +42,7 @@ class SolicitudPasswordController extends Controller
             ->get();
     }
 
+    /** Marca una solicitud como resuelta, después de que el admin ya cambió la contraseña desde Usuarios. */
     public function atender(SolicitudPassword $solicitud)
     {
         $solicitud->update(['atendida_en' => now()]);

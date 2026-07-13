@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Una venta registrada. "inventario_id" es opcional: si viene, la venta
+ * está ligada a un producto del catálogo (y descontó stock al crearse,
+ * ver VentaController@store); si no, es una "venta libre" (servicio o
+ * algo que no se lleva en Inventario). Usa soft deletes.
+ */
 class Venta extends Model
 {
     use HasFactory, SoftDeletes;
@@ -32,11 +38,13 @@ class Venta extends Model
         ];
     }
 
+    /** El producto de Inventario vendido, si la venta está ligada a uno. */
     public function inventario(): BelongsTo
     {
         return $this->belongsTo(Inventario::class);
     }
 
+    /** Quién registró la venta. */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

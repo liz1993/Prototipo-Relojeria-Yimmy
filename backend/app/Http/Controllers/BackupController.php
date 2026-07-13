@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
 
+/** Respaldo de la base de datos (solo admin): un único endpoint que genera y descarga un .sql. */
 class BackupController extends Controller
 {
     /**

@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
+/**
+ * Gestión de usuarios (solo admin): crear cuentas, ascender a admin,
+ * cambiar sucursal o resetear contraseña. Es también el mecanismo real de
+ * "recuperar contraseña" de esta app -- no hay envío de correo, el admin
+ * cambia la contraseña acá mismo cuando alguien la olvida.
+ */
 class UserController extends Controller
 {
     public function index()
@@ -14,6 +20,7 @@ class UserController extends Controller
         return User::with('sucursal:id,nombre')->orderBy('name')->get();
     }
 
+    /** Crea un usuario nuevo. Si es admin, sucursal_id se fuerza a null; si es empleado, es obligatorio. */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -36,6 +43,7 @@ class UserController extends Controller
         return response()->json($user->load('sucursal:id,nombre'), 201);
     }
 
+    /** Edita un usuario. La contraseña solo cambia si se manda una nueva (nullable). */
     public function update(Request $request, User $user)
     {
         $data = $request->validate([

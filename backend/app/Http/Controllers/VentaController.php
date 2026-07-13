@@ -8,8 +8,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Ventas, con o sin producto de Inventario asociado. Cuando sí hay producto
+ * asociado, store()/destroy() mueven el stock dentro de una transacción
+ * (DB::transaction) para que la venta y el descuento de inventario nunca
+ * queden a medias si algo falla.
+ */
 class VentaController extends Controller
 {
+    /** Lista ventas, filtradas por sucursal (forzado para empleado, opcional para admin). */
     public function index(Request $request)
     {
         $query = Venta::with('user:id,name,username')->orderByDesc('id');
@@ -24,6 +31,13 @@ class VentaController extends Controller
         return $query->get();
     }
 
+    /**
+     * Registra una venta. Si viene ligada a un producto de Inventario,
+     * valida que haya stock suficiente y lo descuenta (con lockForUpdate,
+     * para que dos ventas simultáneas no descuenten sobre un stock ya
+     * caducado). Si "inventario_id" viene vacío, es una venta libre y no
+     * toca el inventario.
+     */
     public function store(Request $request)
     {
         $user = $request->user();
@@ -71,6 +85,7 @@ class VentaController extends Controller
         return response()->json($venta, 201);
     }
 
+    /** Edita los datos de una venta. A propósito NO toca el stock -- si hay que corregirlo, se hace directo en Inventario. */
     public function update(Request $request, Venta $venta)
     {
         $data = $request->validate([
@@ -85,6 +100,7 @@ class VentaController extends Controller
         return response()->json($venta);
     }
 
+    /** Borra (soft delete) la venta y devuelve el stock descontado al inventario. */
     public function destroy(Venta $venta)
     {
         DB::transaction(function () use ($venta) {

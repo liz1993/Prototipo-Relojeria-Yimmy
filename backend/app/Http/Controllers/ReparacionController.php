@@ -5,10 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Reparacion;
 use Illuminate\Http\Request;
 
+/**
+ * Reparaciones. Es el único recurso donde un empleado puede escribir sobre
+ * un registro que no creó él mismo (para mover el estado / dejar
+ * observaciones) -- por eso update() valida "a mano" la sucursal del
+ * registro (ver el comentario ahí abajo).
+ */
 class ReparacionController extends Controller
 {
+    /** Flujo de estados por el que pasa una reparación, en orden. */
     public const ESTADOS = ['pendiente', 'en_proceso', 'listo', 'entregado'];
 
+    /** Lista reparaciones. "buscar" filtra por nombre de cliente (parcial) o por id exacto si es numérico -- lo usa también Consulta de Estado. */
     public function index(Request $request)
     {
         $query = Reparacion::with(['user:id,name,username', 'sucursal:id,nombre'])->orderByDesc('id');
@@ -32,6 +40,7 @@ class ReparacionController extends Controller
         return $query->get();
     }
 
+    /** Crea una reparación nueva, siempre arranca en estado "pendiente". */
     public function store(Request $request)
     {
         $user = $request->user();
@@ -66,8 +75,9 @@ class ReparacionController extends Controller
     }
 
     /**
-     * Any authenticated user can move a repair's estado along.
-     * Only admins can edit the rest of the record (client, model, amounts, photo).
+     * Cualquier usuario autenticado puede mover el "estado" de una reparación
+     * y editar sus observaciones. Solo el admin puede editar el resto del
+     * registro (cliente, modelo, valores, foto).
      */
     public function update(Request $request, Reparacion $reparacion)
     {
@@ -114,6 +124,7 @@ class ReparacionController extends Controller
         return response()->json($reparacion);
     }
 
+    /** Borrado suave (solo admin) -- pasa a la papelera. */
     public function destroy(Reparacion $reparacion)
     {
         $reparacion->delete();

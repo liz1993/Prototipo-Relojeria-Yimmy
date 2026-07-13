@@ -10,6 +10,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Usuario del sistema: puede ser "admin" (dueño, ve/administra todas las
+ * sucursales, sucursal_id = null) o "empleado" (atado a una sola sucursal).
+ * Usa Sanctum (HasApiTokens) para generar el token de acceso al hacer login.
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -52,6 +57,7 @@ class User extends Authenticatable
         ];
     }
 
+    /** Sucursal a la que pertenece (null si es admin). */
     public function sucursal(): BelongsTo
     {
         return $this->belongsTo(Sucursal::class);

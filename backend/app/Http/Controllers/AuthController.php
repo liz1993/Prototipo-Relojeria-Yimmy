@@ -6,8 +6,13 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Login, registro y sesión. Usa Sanctum con tokens (no cookies), porque
+ * el frontend estático y el backend corren en puertos distintos.
+ */
 class AuthController extends Controller
 {
+    /** Recibe email + password, devuelve un token de Sanctum si son válidos. */
     public function login(Request $request)
     {
         $data = $request->validate([
@@ -29,6 +34,7 @@ class AuthController extends Controller
         ]);
     }
 
+    /** Auto-registro público. Siempre crea un usuario "empleado" -- para ser admin hace falta que otro admin lo cree/ascienda desde Usuarios. */
     public function register(Request $request)
     {
         $data = $request->validate([
@@ -53,6 +59,7 @@ class AuthController extends Controller
         ], 201);
     }
 
+    /** Revoca el token actual (cierra sesión solo en este dispositivo). */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -60,11 +67,13 @@ class AuthController extends Controller
         return response()->json(['message' => 'Sesión cerrada.']);
     }
 
+    /** Devuelve el usuario autenticado -- usado para restaurar la sesión al recargar la página. */
     public function me(Request $request)
     {
         return response()->json($this->formatUser($request->user()));
     }
 
+    /** Da forma consistente a la info del usuario que se manda al frontend. */
     private function formatUser(User $user): array
     {
         $user->loadMissing('sucursal:id,nombre');

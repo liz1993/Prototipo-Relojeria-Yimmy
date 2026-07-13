@@ -8,8 +8,14 @@ use App\Models\Sucursal;
 use App\Models\Venta;
 use Illuminate\Http\Request;
 
+/**
+ * Estadísticas agregadas (solo admin, ver el middleware en las rutas):
+ * ventas, reparaciones e inventario, con utilidad estimada. Todo se
+ * calcula al vuelo con consultas SQL -- no hay tabla de reportes.
+ */
 class ReporteController extends Controller
 {
+    /** Arma el reporte completo, opcionalmente filtrado por periodo (todo|mes) y por sucursal. */
     public function index(Request $request)
     {
         $esMes = $request->query('periodo') === 'mes';

@@ -8,14 +8,21 @@ use App\Models\Sucursal;
 use App\Models\Venta;
 use Illuminate\Http\Request;
 
+/**
+ * Papelera de reciclaje: junta en una sola lista todo lo que se "eliminó"
+ * (soft delete) en Inventario, Ventas y Reparaciones, y permite
+ * restaurarlo. Solo admin.
+ */
 class PapeleraController extends Controller
 {
+    /** Mapa "tipo" (como llega en la URL) -> clase del modelo correspondiente. */
     private const TIPOS = [
         'inventario' => Inventario::class,
         'ventas' => Venta::class,
         'reparaciones' => Reparacion::class,
     ];
 
+    /** Junta los registros borrados de los 3 tipos en una sola lista, más reciente primero. */
     public function index(Request $request)
     {
         $sucursalId = $request->query('sucursal_id');
@@ -59,6 +66,7 @@ class PapeleraController extends Controller
         return response()->json($items->sortByDesc('eliminado_el')->values());
     }
 
+    /** Devuelve un registro borrado a su estado normal (quita el soft delete). */
     public function restaurar(string $tipo, int $id)
     {
         abort_unless(array_key_exists($tipo, self::TIPOS), 404);

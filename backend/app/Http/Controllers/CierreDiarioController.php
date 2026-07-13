@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Totales de ventas por día ("cierre de caja"). No hay nada que guardar
+ * a mano: todo se calcula agrupando las ventas ya existentes, así que
+ * nunca queda desactualizado.
+ */
 class CierreDiarioController extends Controller
 {
     /**
@@ -29,6 +34,7 @@ class CierreDiarioController extends Controller
             ->get();
     }
 
+    /** Ventas de un día puntual, con detalle de cada una (quién la registró, en qué sucursal). */
     public function detalle(Request $request, string $fecha)
     {
         $query = Venta::with(['user:id,name,username', 'sucursal:id,nombre'])
@@ -38,6 +44,7 @@ class CierreDiarioController extends Controller
         return $query->orderBy('created_at')->get();
     }
 
+    /** Descarga un CSV con el detalle de ventas de un rango de fechas, más totales por día y total general. */
     public function exportar(Request $request)
     {
         $data = $request->validate([
@@ -90,6 +97,7 @@ class CierreDiarioController extends Controller
         ]);
     }
 
+    /** Filtro común a index/detalle: sucursal (forzada para empleado) y rango de fechas opcional. */
     private function aplicarFiltros(Builder $query, Request $request): void
     {
         $user = $request->user();
