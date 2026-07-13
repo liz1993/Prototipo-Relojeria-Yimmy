@@ -34,6 +34,7 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:3'],
             'sucursal_id' => ['required', 'integer', 'exists:sucursales,id'],
         ]);
@@ -41,7 +42,7 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $data['name'] ?: $data['username'],
             'username' => $data['username'],
-            'email' => $data['username'].'@relojeriajimmy.local',
+            'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'tipo' => 'empleado',
             'sucursal_id' => $data['sucursal_id'],

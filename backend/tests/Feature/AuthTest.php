@@ -62,6 +62,7 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/register', [
             'name' => 'Nuevo Empleado',
             'username' => 'nuevo_empleado',
+            'email' => 'nuevo_empleado@example.com',
             'password' => '123',
             'sucursal_id' => $sucursal->id,
         ]);
@@ -72,6 +73,7 @@ class AuthTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'username' => 'nuevo_empleado',
+            'email' => 'nuevo_empleado@example.com',
             'tipo' => 'empleado',
             'sucursal_id' => $sucursal->id,
         ]);
@@ -84,6 +86,7 @@ class AuthTest extends TestCase
 
         $response = $this->postJson('/api/register', [
             'username' => 'repetido',
+            'email' => 'repetido@example.com',
             'password' => '123',
             'sucursal_id' => $sucursal->id,
         ]);
@@ -91,10 +94,26 @@ class AuthTest extends TestCase
         $response->assertStatus(422)->assertJsonValidationErrors('username');
     }
 
+    public function test_register_rejects_duplicate_email(): void
+    {
+        $sucursal = Sucursal::factory()->create();
+        User::factory()->create(['email' => 'repetido@example.com']);
+
+        $response = $this->postJson('/api/register', [
+            'username' => 'usuario_nuevo',
+            'email' => 'repetido@example.com',
+            'password' => '123',
+            'sucursal_id' => $sucursal->id,
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('email');
+    }
+
     public function test_register_requires_a_valid_sucursal(): void
     {
         $response = $this->postJson('/api/register', [
             'username' => 'sin_sucursal',
+            'email' => 'sin_sucursal@example.com',
             'password' => '123',
             'sucursal_id' => 9999,
         ]);

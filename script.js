@@ -283,18 +283,30 @@ function mostrarErrorConexionSesion() {
 async function ejecutarRegistro() {
     const nombre = document.getElementById('reg-nombre').value;
     const nuevoUser = document.getElementById('reg-user').value;
+    const email = document.getElementById('reg-email').value;
     const nuevoPass = document.getElementById('reg-pass').value;
+    const passConfirm = document.getElementById('reg-pass-confirm').value;
     const sucursalId = document.getElementById('reg-sucursal').value;
-    if (nuevoUser === "" || nuevoPass === "" || !sucursalId) {
-        alert("Por favor rellena los campos, incluyendo la sucursal");
+    const errorEl = document.getElementById('reg-error');
+    errorEl.classList.add('hidden');
+
+    if (nuevoUser === "" || email === "" || nuevoPass === "" || !sucursalId) {
+        errorEl.textContent = 'Por favor rellena los campos, incluyendo el correo y la sucursal.';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+    if (nuevoPass !== passConfirm) {
+        errorEl.textContent = 'Las contraseñas no coinciden.';
+        errorEl.classList.remove('hidden');
         return;
     }
     try {
-        await apiFetch('/register', { method: 'POST', body: { name: nombre, username: nuevoUser, password: nuevoPass, sucursal_id: sucursalId } });
+        await apiFetch('/register', { method: 'POST', body: { name: nombre, username: nuevoUser, email, password: nuevoPass, sucursal_id: sucursalId } });
         alert('¡Usuario ' + nuevoUser + ' registrado con éxito!');
         navigateTo('sec-login');
     } catch (err) {
-        alert(err.message || 'No se pudo registrar el usuario.');
+        errorEl.textContent = err.message || 'No se pudo registrar el usuario.';
+        errorEl.classList.remove('hidden');
     }
 }
 
