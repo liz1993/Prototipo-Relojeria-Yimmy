@@ -11,11 +11,11 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $data = $request->validate([
-            'username' => ['required', 'string'],
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::where('username', $data['username'])->first();
+        $user = User::where('email', $data['email'])->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             return response()->json(['message' => 'Credenciales incorrectas.'], 401);

@@ -311,11 +311,11 @@ async function ejecutarRegistro() {
 }
 
 async function login() {
-    const uInput = document.getElementById('username').value;
+    const eInput = document.getElementById('login-email').value;
     const pInput = document.getElementById('password').value;
 
     try {
-        const data = await apiFetch('/login', { method: 'POST', body: { username: uInput, password: pInput } });
+        const data = await apiFetch('/login', { method: 'POST', body: { email: eInput, password: pInput } });
         document.getElementById('login-error').classList.add('hidden');
         guardarSesion(data.token, data.user);
         mostrarDashboard(data.user);
@@ -333,7 +333,7 @@ function logout() {
     apiFetch('/logout', { method: 'POST' }).catch(() => { /* token ya inválido o red caída, no importa */ });
     sesionActual = null;
     limpiarSesion();
-    document.getElementById('username').value = '';
+    document.getElementById('login-email').value = '';
     document.getElementById('password').value = '';
     navigateTo('sec-login');
 }

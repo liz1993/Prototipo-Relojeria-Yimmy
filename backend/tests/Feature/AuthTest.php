@@ -16,11 +16,12 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->empleado()->create([
             'username' => 'empleado_centro',
+            'email' => 'empleado_centro@example.com',
             'password' => Hash::make('secreto'),
         ]);
 
         $response = $this->postJson('/api/login', [
-            'username' => 'empleado_centro',
+            'email' => 'empleado_centro@example.com',
             'password' => 'secreto',
         ]);
 
@@ -34,21 +35,22 @@ class AuthTest extends TestCase
     {
         User::factory()->empleado()->create([
             'username' => 'empleado_centro',
+            'email' => 'empleado_centro@example.com',
             'password' => Hash::make('secreto'),
         ]);
 
         $response = $this->postJson('/api/login', [
-            'username' => 'empleado_centro',
+            'email' => 'empleado_centro@example.com',
             'password' => 'incorrecta',
         ]);
 
         $response->assertStatus(401)->assertJson(['message' => 'Credenciales incorrectas.']);
     }
 
-    public function test_login_with_unknown_username_is_rejected(): void
+    public function test_login_with_unknown_email_is_rejected(): void
     {
         $response = $this->postJson('/api/login', [
-            'username' => 'no-existe',
+            'email' => 'no-existe@example.com',
             'password' => 'lo-que-sea',
         ]);
 
@@ -141,20 +143,21 @@ class AuthTest extends TestCase
     {
         User::factory()->empleado()->create([
             'username' => 'empleado_centro',
+            'email' => 'empleado_centro@example.com',
             'password' => Hash::make('secreto'),
         ]);
 
         // La ruta está limitada a 6 intentos por minuto por IP (throttle:6,1).
         for ($i = 0; $i < 6; $i++) {
-            $this->postJson('/api/login', ['username' => 'empleado_centro', 'password' => 'incorrecta'])
+            $this->postJson('/api/login', ['email' => 'empleado_centro@example.com', 'password' => 'incorrecta'])
                 ->assertStatus(401);
         }
 
-        $this->postJson('/api/login', ['username' => 'empleado_centro', 'password' => 'incorrecta'])
+        $this->postJson('/api/login', ['email' => 'empleado_centro@example.com', 'password' => 'incorrecta'])
             ->assertStatus(429);
 
         // Ni siquiera con la contraseña correcta pasa una vez agotado el límite.
-        $this->postJson('/api/login', ['username' => 'empleado_centro', 'password' => 'secreto'])
+        $this->postJson('/api/login', ['email' => 'empleado_centro@example.com', 'password' => 'secreto'])
             ->assertStatus(429);
     }
 
