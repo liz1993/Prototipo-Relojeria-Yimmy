@@ -314,13 +314,17 @@ async function login() {
     const eInput = document.getElementById('login-email').value;
     const pInput = document.getElementById('password').value;
 
+    const errorEl = document.getElementById('login-error');
     try {
         const data = await apiFetch('/login', { method: 'POST', body: { email: eInput, password: pInput } });
-        document.getElementById('login-error').classList.add('hidden');
+        errorEl.classList.add('hidden');
         guardarSesion(data.token, data.user);
         mostrarDashboard(data.user);
     } catch (err) {
-        document.getElementById('login-error').classList.remove('hidden');
+        document.getElementById('login-error-texto').textContent = err.status === 429
+            ? 'Demasiados intentos. Espera un minuto y vuelve a intentar.'
+            : (err.message || 'Credenciales incorrectas.');
+        errorEl.classList.remove('hidden');
     }
 }
 
