@@ -4,312 +4,322 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demo Prototipado - Relojería Jimmy</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8C%9A%EF%B8%8F%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-            color: #333;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .container {
-            max-width: 900px;
-            width: 100%;
-            margin: 20px;
-            padding: 30px;
-            background: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 1px solid #ddd;
-            transition: all 0.3s ease;
-        }
-        h1 {
-            font-family: 'Playfair Display', serif;
-            color: #d4af37; /* Dorado */
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 2.5em;
-        }
-        h2 {
-            color: #2c3e50;
-            border-bottom: 2px solid #d4af37;
-            
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-        input, button {
-            display: block;
-            margin: 15px 0;
-            padding: 12px;
-            width: 100%;
-            box-sizing: border-box;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-        input:focus {
-            outline: none;
-            border-color: #d4af37;
-            box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
-        }
-        button {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-        button:hover {
-            background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
-        }
-        button i { margin-right: 8px; }
-        .back-btn {
-            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-            margin-top: 10px;
-        }
-        .hidden { display: none; }
-        .fade-in { animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background: #d4af37; color: white; }
-        .alert {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            color: #856404;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 8px;
-            border-left: 5px solid #d4af37;
-            display: flex;
-            align-items: center;
-        }
-        .nav { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
-        .nav button { width: auto; padding: 10px 15px; border-radius: 25px; font-size: 14px; }
-        .login-footer { text-align: center; margin-top: 15px; font-size: 14px; }
-        .login-footer a { color: #007bff; text-decoration: none; cursor: pointer; font-weight: 500; }
-        ul li { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #d4af37; list-style: none; }
-        
-        /* Estilo para la previsualización de imagen */
-        .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; vertical-align: middle; margin-right: 10px; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1><i class="fas fa-clock"></i> Relojería Jimmy</h1>
-        
-        <div id="sec-login" class="fade-in">
-            <h2><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</h2>
-            <input type="text" id="username" placeholder="Usuario">
-            <input type="password" id="password" placeholder="Contraseña">
-            <button onclick="login()"><i class="fas fa-lock"></i> Entrar</button>
-            <p id="login-error" class="hidden" style="color: red; text-align: center;"><i class="fas fa-exclamation-triangle"></i> Credenciales incorrectas.</p>
-            <div class="login-footer">
-                <p>¿No tienes cuenta? <a onclick="navigateTo('sec-registro')">Regístrate</a></p>
-                <p><a onclick="navigateTo('sec-recuperar')">Olvidé mi contraseña</a></p>
-            </div>
-        </div>
+        <header>
+            <h1><i class="fas fa-clock" aria-hidden="true"></i> Relojería Jimmy</h1>
+        </header>
 
-        <div id="sec-registro" class="hidden fade-in">
-            <h2><i class="fas fa-user-plus"></i> Registro</h2>
-            <input type="text" id="reg-nombre" placeholder="Nombre completo">
-            <input type="text" id="reg-user" placeholder="Nombre de usuario deseado">
-            <input type="password" id="reg-pass" placeholder="Contraseña">
-            <button onclick="ejecutarRegistro()">Crear Cuenta</button>
-            <button class="back-btn" onclick="navigateTo('sec-login')">Volver</button>
-        </div>
+        <p id="cargando-sesion" class="hidden" style="text-align:center; padding: 40px 0; color: #666;">Cargando sesión...</p>
 
-        <div id="sec-recuperar" class="hidden fade-in">
-            <h2><i class="fas fa-key"></i> Recuperar Acceso</h2>
-            <input type="email" placeholder="Tu correo electrónico">
-            <button onclick="alert('Enlace enviado'); navigateTo('sec-login')">Enviar Enlace</button>
-            <button class="back-btn" onclick="navigateTo('sec-login')">Volver</button>
-        </div>
+        <main>
+            <section id="sec-login" class="screen fade-in" aria-labelledby="hdr-login">
+                <h2 id="hdr-login"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Iniciar Sesión</h2>
+                <form id="form-login" onsubmit="event.preventDefault(); login();">
+                    <label class="sr-only" for="username">Usuario</label>
+                    <input type="text" id="username" placeholder="Usuario" autocomplete="username" required>
+                    <label class="sr-only" for="password">Contraseña</label>
+                    <div class="password-wrap">
+                        <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password" required>
+                        <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
+                    </div>
+                    <button type="submit"><i class="fas fa-lock" aria-hidden="true"></i> Entrar</button>
+                    <p id="login-error" class="hidden" role="alert" style="color: red; text-align: center;"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Credenciales incorrectas.</p>
+                </form>
+                <nav class="login-footer" aria-label="Accesos alternativos">
+                    <p>¿No tienes cuenta? <a href="#" onclick="event.preventDefault(); navigateTo('sec-registro')">Regístrate</a></p>
+                    <p><a href="#" onclick="event.preventDefault(); navigateTo('sec-recuperar')">Olvidé mi contraseña</a></p>
+                </nav>
+            </section>
 
-        <div id="sec-dashboard" class="hidden fade-in">
-            <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
-            <p id="msg-bienvenida" style="font-weight: 500; color: #d4af37;"></p>
-            <div class="alert">
-                <i class="fas fa-bell"></i>
-                <span style="margin-left:10px">Alertas: Entrega pendiente: Reloj XYZ. Inventario bajo: Repuesto ABC.</span>
-            </div>
-            <div class="nav">
-                <button onclick="navigateTo('sec-ventas')"><i class="fas fa-shopping-cart"></i> Ventas</button>
-                <button onclick="navigateTo('sec-inventario')"><i class="fas fa-boxes"></i> Inventario</button>
-                <button onclick="navigateTo('sec-reparaciones')"><i class="fas fa-tools"></i> Reparaciones</button>
-                <button onclick="navigateTo('sec-consulta')"><i class="fas fa-search"></i> Consulta</button>
-                <button id="reportes-btn" class="hidden" onclick="navigateTo('sec-reportes')"><i class="fas fa-chart-bar"></i> Reportes</button>
-                <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Salir</button>
-            </div>
-        </div>
+            <section id="sec-registro" class="screen hidden fade-in" aria-labelledby="hdr-registro">
+                <h2 id="hdr-registro"><i class="fas fa-user-plus" aria-hidden="true"></i> Registro</h2>
+                <form id="form-registro" onsubmit="event.preventDefault(); ejecutarRegistro();">
+                    <label class="sr-only" for="reg-nombre">Nombre completo</label>
+                    <input type="text" id="reg-nombre" placeholder="Nombre completo" autocomplete="name">
+                    <label class="sr-only" for="reg-user">Nombre de usuario deseado</label>
+                    <input type="text" id="reg-user" placeholder="Nombre de usuario deseado" autocomplete="username" required>
+                    <label class="sr-only" for="reg-pass">Contraseña</label>
+                    <div class="password-wrap">
+                        <input type="password" id="reg-pass" placeholder="Contraseña" autocomplete="new-password" required>
+                        <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('reg-pass', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
+                    </div>
+                    <label class="sr-only" for="reg-sucursal">Sucursal</label>
+                    <select id="reg-sucursal" required>
+                        <option value="">-- Selecciona tu sucursal --</option>
+                    </select>
+                    <button type="submit">Crear Cuenta</button>
+                    <button type="button" class="back-btn" onclick="navigateTo('sec-login')">Volver</button>
+                </form>
+            </section>
 
-        <div id="sec-ventas" class="hidden fade-in">
-            <h2>Ventas</h2>
-            <input type="text" id="v-prod" placeholder="Producto">
-            <input type="number" id="v-cant" placeholder="Cantidad">
-            <input type="number" id="v-val" placeholder="Valor">
-            <button onclick="regVenta()">Guardar Venta</button>
-            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
-            <ul id="lista-ventas"></ul>
-        </div>
+            <section id="sec-recuperar" class="screen hidden fade-in" aria-labelledby="hdr-recuperar">
+                <h2 id="hdr-recuperar"><i class="fas fa-key" aria-hidden="true"></i> Recuperar Acceso</h2>
+                <p style="font-size: 14px; color: #666;">Escribe tu usuario. Le avisamos al administrador para que te contacte y te cambie la contraseña.</p>
+                <form id="form-recuperar" onsubmit="recuperarAcceso(event)">
+                    <label class="sr-only" for="rec-usuario">Tu nombre de usuario</label>
+                    <input type="text" id="rec-usuario" placeholder="Tu nombre de usuario" autocomplete="username" required>
+                    <button type="submit">Avisar al Administrador</button>
+                    <button type="button" class="back-btn" onclick="navigateTo('sec-login')">Volver</button>
+                </form>
+                <p id="rec-resultado" style="margin-top:10px; font-weight:bold" aria-live="polite"></p>
+            </section>
 
-        <div id="sec-inventario" class="hidden fade-in">
-            <h2>Inventario</h2>
-            <input type="text" id="busc-inv" placeholder="Buscar producto..." onkeyup="buscInv()">
-            <table id="tab-inv">
-                <tr><th>Código</th><th>Descripción</th><th>Cant.</th><th>Precio</th></tr>
-                <tr><td>001</td><td>Reloj Rolex</td><td>10</td><td>$1000</td></tr>
-                <tr><td>002</td><td>Repuesto B</td><td>2</td><td>$50</td></tr>
-            </table>
-            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
-        </div>
+            <section id="sec-dashboard" class="screen hidden fade-in" aria-labelledby="hdr-dashboard">
+                <h2 id="hdr-dashboard"><i class="fas fa-tachometer-alt" aria-hidden="true"></i> Dashboard</h2>
+                <p id="msg-bienvenida" style="font-weight: 500; color: #d4af37;" aria-live="polite"></p>
+                <div class="alert" role="status">
+                    <i class="fas fa-bell" aria-hidden="true"></i>
+                    <span id="alertas-texto" style="margin-left:10px">Cargando alertas...</span>
+                </div>
+                <nav class="nav" aria-label="Secciones del panel">
+                    <button type="button" onclick="navigateTo('sec-ventas')"><i class="fas fa-shopping-cart" aria-hidden="true"></i> Ventas</button>
+                    <button type="button" onclick="navigateTo('sec-inventario')"><i class="fas fa-boxes" aria-hidden="true"></i> Inventario</button>
+                    <button type="button" onclick="navigateTo('sec-reparaciones')"><i class="fas fa-tools" aria-hidden="true"></i> Reparaciones</button>
+                    <button type="button" onclick="navigateTo('sec-consulta')"><i class="fas fa-search" aria-hidden="true"></i> Consulta</button>
+                    <button type="button" id="reportes-btn" class="hidden" onclick="navigateTo('sec-reportes')"><i class="fas fa-chart-bar" aria-hidden="true"></i> Reportes</button>
+                    <button type="button" id="sucursales-btn" class="hidden" onclick="navigateTo('sec-sucursales')"><i class="fas fa-store" aria-hidden="true"></i> Sucursales</button>
+                    <button type="button" id="usuarios-btn" class="hidden" onclick="navigateTo('sec-usuarios')"><i class="fas fa-users" aria-hidden="true"></i> Usuarios</button>
+                    <button type="button" id="cierres-btn" class="hidden" onclick="navigateTo('sec-cierres')"><i class="fas fa-cash-register" aria-hidden="true"></i> Cierres Diarios</button>
+                    <button type="button" id="mantenimiento-btn" class="hidden" onclick="navigateTo('sec-mantenimiento')"><i class="fas fa-wrench" aria-hidden="true"></i> Mantenimiento</button>
+                    <button type="button" onclick="logout()"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Salir</button>
+                </nav>
+            </section>
 
-        <div id="sec-reparaciones" class="hidden fade-in">
-            <h2>Reparaciones</h2>
-            <input type="text" id="r-cli" placeholder="Cliente">
-            <input type="text" id="r-mod" placeholder="Modelo">
-            <input type="number" id="r-val-total" placeholder="Valor Total ($)">
-            <input type="number" id="r-abono" placeholder="Abono ($)">
-            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">Foto del reloj:</label>
-            <input type="file" id="r-foto" accept="image/*">
-            <input type="date" id="r-fec">
-            <button onclick="regRep()">Registrar</button>
-            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
-            <ul id="lista-reps"></ul>
-        </div>
+            <section id="sec-ventas" class="screen hidden fade-in" aria-labelledby="hdr-ventas">
+                <h2 id="hdr-ventas">Ventas</h2>
+                <form id="form-ventas" onsubmit="event.preventDefault(); regVenta();">
+                    <input type="hidden" id="v-edit-id" value="">
+                    <input type="hidden" id="v-inventario-id" value="">
+                    <label class="sr-only" for="v-sucursal-activa">Sucursal</label>
+                    <select id="v-sucursal-activa" class="hidden" onchange="cargarInventarioParaVentas()"></select>
+                    <label class="sr-only" for="v-inv-select">Producto del inventario (opcional)</label>
+                    <select id="v-inv-select" onchange="seleccionarProductoVenta()">
+                        <option value="">-- Producto libre (no descuenta inventario) --</option>
+                    </select>
+                    <label class="sr-only" for="v-prod">Producto</label>
+                    <input type="text" id="v-prod" placeholder="Producto" required>
+                    <label class="sr-only" for="v-cant">Cantidad</label>
+                    <input type="number" id="v-cant" placeholder="Cantidad">
+                    <label class="sr-only" for="v-val">Valor</label>
+                    <input type="number" id="v-val" placeholder="Valor">
+                    <button type="submit" id="v-submit-btn">Guardar Venta</button>
+                    <button type="button" id="v-cancelar-btn" class="back-btn hidden" onclick="cancelarEdicionVenta()">Cancelar edición</button>
+                    <button type="button" class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+                </form>
+                <table id="tab-ventas">
+                    <caption class="sr-only">Ventas registradas</caption>
+                    <thead>
+                        <tr><th scope="col">Producto</th><th scope="col">Cantidad</th><th scope="col">Valor</th><th scope="col">Registrado por</th><th scope="col">Acciones</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="ventas-paginacion"></div>
+            </section>
 
-        <div id="sec-consulta" class="hidden fade-in">
-            <h2>Consulta de Estado</h2>
-            <input type="text" id="c-id" placeholder="Nombre o ID">
-            <button onclick="document.getElementById('res-c').innerText = 'Estado: En proceso para ' + document.getElementById('c-id').value">Consultar</button>
-            <p id="res-c" style="margin-top:10px; font-weight:bold"></p>
-            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
-        </div>
+            <section id="sec-inventario" class="screen hidden fade-in" aria-labelledby="hdr-inventario">
+                <h2 id="hdr-inventario">Inventario</h2>
+                <div id="inventario-admin-controls">
+                    <label class="sr-only" for="inv-sucursal-activa">Sucursal</label>
+                    <select id="inv-sucursal-activa" onchange="cargarInventario()"></select>
+                    <form id="form-inventario" onsubmit="event.preventDefault(); agregarProducto();">
+                        <input type="hidden" id="inv-edit-id" value="">
+                        <label class="sr-only" for="inv-codigo">Código</label>
+                        <input type="text" id="inv-codigo" placeholder="Código" required>
+                        <label class="sr-only" for="inv-desc">Descripción</label>
+                        <input type="text" id="inv-desc" placeholder="Descripción" required>
+                        <label class="sr-only" for="inv-cant">Cantidad</label>
+                        <input type="number" id="inv-cant" placeholder="Cantidad" min="0">
+                        <label class="sr-only" for="inv-precio">Precio</label>
+                        <input type="number" id="inv-precio" placeholder="Precio" min="0" step="0.01">
+                        <label class="sr-only" for="inv-costo">Costo (no lo ven los empleados)</label>
+                        <input type="number" id="inv-costo" placeholder="Costo (no lo ven los empleados)" min="0" step="0.01">
+                        <label for="inv-foto" style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">Foto del producto:</label>
+                        <input type="file" id="inv-foto" accept="image/*">
+                        <button type="submit" id="inv-submit-btn"><i class="fas fa-plus" aria-hidden="true"></i> Agregar Producto</button>
+                        <button type="button" id="inv-cancelar-btn" class="back-btn hidden" onclick="cancelarEdicionProducto()">Cancelar edición</button>
+                    </form>
+                </div>
+                <div role="search">
+                    <label class="sr-only" for="busc-inv">Buscar producto</label>
+                    <input type="search" id="busc-inv" placeholder="Buscar producto..." onkeyup="buscInv()">
+                </div>
+                <table id="tab-inv">
+                    <caption class="sr-only">Inventario de productos</caption>
+                    <thead>
+                        <tr><th scope="col">Foto</th><th scope="col">Código</th><th scope="col">Descripción</th><th scope="col">Cant.</th><th scope="col">Precio</th><th scope="col" id="th-inv-costo" class="hidden">Costo</th><th scope="col">Acciones</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="inv-paginacion"></div>
+                <button type="button" class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+            </section>
 
-        <div id="sec-reportes" class="hidden fade-in">
-            <h2>Reportes Mensuales</h2>
-            <p>Ventas totales: $5000. Servicios: 10.</p>
-            <button class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
-        </div>
+            <section id="sec-reparaciones" class="screen hidden fade-in" aria-labelledby="hdr-reparaciones">
+                <h2 id="hdr-reparaciones">Reparaciones</h2>
+                <form id="form-reparaciones" onsubmit="event.preventDefault(); regRep();">
+                    <input type="hidden" id="r-edit-id" value="">
+                    <label class="sr-only" for="r-sucursal-activa">Sucursal</label>
+                    <select id="r-sucursal-activa" class="hidden"></select>
+                    <label class="sr-only" for="r-cli">Cliente</label>
+                    <input type="text" id="r-cli" placeholder="Cliente" required>
+                    <label class="sr-only" for="r-tel">Teléfono de contacto</label>
+                    <input type="tel" id="r-tel" placeholder="Teléfono de contacto">
+                    <label class="sr-only" for="r-mod">Modelo</label>
+                    <input type="text" id="r-mod" placeholder="Modelo">
+                    <label class="sr-only" for="r-val-total">Valor Total ($)</label>
+                    <input type="number" id="r-val-total" placeholder="Valor Total ($)">
+                    <label class="sr-only" for="r-abono">Abono ($)</label>
+                    <input type="number" id="r-abono" placeholder="Abono ($)">
+                    <label for="r-foto" style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">Foto del reloj:</label>
+                    <input type="file" id="r-foto" accept="image/*">
+                    <label class="sr-only" for="r-fec">Fecha</label>
+                    <input type="date" id="r-fec">
+                    <label class="sr-only" for="r-obs">Observaciones</label>
+                    <textarea id="r-obs" placeholder="Observaciones (ej. diagnóstico al revisar el reloj)" rows="2"></textarea>
+                    <button type="submit" id="r-submit-btn">Registrar</button>
+                    <button type="button" id="r-cancelar-btn" class="back-btn hidden" onclick="cancelarEdicionReparacion()">Cancelar edición</button>
+                    <button type="button" class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+                </form>
+                <div role="search">
+                    <label class="sr-only" for="filtro-estado-rep">Filtrar por estado</label>
+                    <select id="filtro-estado-rep" onchange="filtrarReparaciones()">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en_proceso">En proceso</option>
+                        <option value="listo">Listo para entregar</option>
+                        <option value="entregado">Entregado</option>
+                    </select>
+                </div>
+                <ul id="lista-reps" aria-live="polite"></ul>
+                <div id="reps-paginacion"></div>
+            </section>
+
+            <section id="sec-consulta" class="screen hidden fade-in" aria-labelledby="hdr-consulta">
+                <h2 id="hdr-consulta">Consulta de Estado</h2>
+                <form id="form-consulta" onsubmit="consultarEstado(event)">
+                    <label class="sr-only" for="c-id">Nombre o ID</label>
+                    <input type="text" id="c-id" placeholder="Nombre o ID" required>
+                    <button type="submit">Consultar</button>
+                </form>
+                <div id="res-c" style="margin-top:10px" aria-live="polite"></div>
+                <button type="button" class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+            </section>
+
+            <section id="sec-reportes" class="screen hidden fade-in" aria-labelledby="hdr-reportes">
+                <h2 id="hdr-reportes">Reportes</h2>
+                <label class="sr-only" for="reportes-periodo">Periodo</label>
+                <select id="reportes-periodo" onchange="cargarReportes()">
+                    <option value="todo">Todo el tiempo</option>
+                    <option value="mes">Este mes</option>
+                </select>
+                <label class="sr-only" for="reportes-sucursal">Sucursal</label>
+                <select id="reportes-sucursal" onchange="cargarReportes()">
+                    <option value="">Todas las sucursales</option>
+                </select>
+                <div id="reportes-contenido" aria-live="polite">Cargando reportes...</div>
+                <button type="button" class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+            </section>
+
+            <section id="sec-sucursales" class="screen hidden fade-in" aria-labelledby="hdr-sucursales">
+                <h2 id="hdr-sucursales"><i class="fas fa-store" aria-hidden="true"></i> Sucursales</h2>
+                <form id="form-sucursal" onsubmit="event.preventDefault(); guardarSucursal();">
+                    <input type="hidden" id="suc-edit-id" value="">
+                    <label class="sr-only" for="suc-nombre">Nombre</label>
+                    <input type="text" id="suc-nombre" placeholder="Nombre de la sucursal" required>
+                    <label class="sr-only" for="suc-direccion">Dirección</label>
+                    <input type="text" id="suc-direccion" placeholder="Dirección (opcional)">
+                    <label class="sr-only" for="suc-telefono">Teléfono</label>
+                    <input type="text" id="suc-telefono" placeholder="Teléfono (opcional)">
+                    <button type="submit" id="suc-submit-btn"><i class="fas fa-plus" aria-hidden="true"></i> Agregar Sucursal</button>
+                    <button type="button" id="suc-cancelar-btn" class="back-btn hidden" onclick="cancelarEdicionSucursal()">Cancelar edición</button>
+                </form>
+                <ul id="lista-sucursales" aria-live="polite"></ul>
+                <button type="button" class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+            </section>
+
+            <section id="sec-usuarios" class="screen hidden fade-in" aria-labelledby="hdr-usuarios">
+                <h2 id="hdr-usuarios"><i class="fas fa-users" aria-hidden="true"></i> Usuarios</h2>
+                <form id="form-usuario" onsubmit="event.preventDefault(); guardarUsuario();">
+                    <input type="hidden" id="usu-edit-id" value="">
+                    <label class="sr-only" for="usu-nombre">Nombre completo</label>
+                    <input type="text" id="usu-nombre" placeholder="Nombre completo" required>
+                    <label class="sr-only" for="usu-username">Nombre de usuario</label>
+                    <input type="text" id="usu-username" placeholder="Nombre de usuario" required>
+                    <label class="sr-only" for="usu-password">Contraseña</label>
+                    <div class="password-wrap">
+                        <input type="password" id="usu-password" placeholder="Contraseña">
+                        <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('usu-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
+                    </div>
+                    <label class="sr-only" for="usu-tipo">Tipo de usuario</label>
+                    <select id="usu-tipo" onchange="actualizarVisibilidadSucursalUsuario()">
+                        <option value="empleado">Empleado</option>
+                        <option value="admin">Administrador (co-propietario, ve todas las sucursales)</option>
+                    </select>
+                    <label class="sr-only" for="usu-sucursal">Sucursal</label>
+                    <select id="usu-sucursal">
+                        <option value="">-- Selecciona sucursal --</option>
+                    </select>
+                    <button type="submit" id="usu-submit-btn"><i class="fas fa-plus" aria-hidden="true"></i> Crear Usuario</button>
+                    <button type="button" id="usu-cancelar-btn" class="back-btn hidden" onclick="cancelarEdicionUsuario()">Cancelar edición</button>
+                </form>
+                <ul id="lista-usuarios" aria-live="polite"></ul>
+                <div id="usuarios-paginacion"></div>
+                <button type="button" class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+            </section>
+
+            <section id="sec-cierres" class="screen hidden fade-in" aria-labelledby="hdr-cierres">
+                <h2 id="hdr-cierres"><i class="fas fa-cash-register" aria-hidden="true"></i> Cierres Diarios</h2>
+                <label class="sr-only" for="cierre-sucursal">Sucursal</label>
+                <select id="cierre-sucursal" onchange="cargarCierres()">
+                    <option value="">Todas las sucursales</option>
+                </select>
+                <label class="sr-only" for="cierre-desde">Desde</label>
+                <input type="date" id="cierre-desde" onchange="cargarCierres()">
+                <label class="sr-only" for="cierre-hasta">Hasta</label>
+                <input type="date" id="cierre-hasta" onchange="cargarCierres()">
+                <button type="button" onclick="exportarVentasCSV()"><i class="fas fa-file-csv" aria-hidden="true"></i> Exportar a Excel (CSV)</button>
+                <table id="tab-cierres">
+                    <caption class="sr-only">Ventas por día</caption>
+                    <thead>
+                        <tr><th scope="col">Fecha</th><th scope="col">Ventas</th><th scope="col">Total</th><th scope="col">Detalle</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="cierres-paginacion"></div>
+                <div id="cierre-detalle" aria-live="polite"></div>
+                <button type="button" class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+            </section>
+
+            <section id="sec-mantenimiento" class="screen hidden fade-in" aria-labelledby="hdr-mantenimiento">
+                <h2 id="hdr-mantenimiento"><i class="fas fa-wrench" aria-hidden="true"></i> Mantenimiento</h2>
+
+                <h3>Copia de seguridad</h3>
+                <p style="font-size: 14px; color: #666;">Descarga un respaldo completo de la base de datos (estructura y datos) en un archivo .sql.</p>
+                <button type="button" onclick="descargarBackup()"><i class="fas fa-database" aria-hidden="true"></i> Descargar Backup (SQL)</button>
+
+                <h3>Papelera</h3>
+                <p style="font-size: 14px; color: #666;">Productos, ventas y reparaciones eliminados. Se pueden restaurar en cualquier momento.</p>
+                <label class="sr-only" for="papelera-sucursal">Sucursal</label>
+                <select id="papelera-sucursal" onchange="cargarPapelera()">
+                    <option value="">Todas las sucursales</option>
+                </select>
+                <ul id="lista-papelera" aria-live="polite"></ul>
+
+                <h3>Solicitudes de recuperación de contraseña</h3>
+                <p style="font-size: 14px; color: #666;">Empleados que pidieron ayuda para recuperar su acceso. Cambiales la contraseña desde Usuarios y marcá la solicitud como atendida.</p>
+                <ul id="lista-solicitudes-password" aria-live="polite"></ul>
+
+                <button type="button" class="back-btn" onclick="navigateTo('sec-dashboard')">Atrás</button>
+            </section>
+        </main>
     </div>
 
-    <script>
-        let usuariosDB = [
-            { user: 'propietario', pass: '123', tipo: 'admin' },
-            { user: 'empleada', pass: '123', tipo: 'empleado' }
-        ];
-
-        function navigateTo(id) {
-            document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function ejecutarRegistro() {
-            const nuevoUser = document.getElementById('reg-user').value;
-            const nuevoPass = document.getElementById('reg-pass').value;
-            if(nuevoUser === "" || nuevoPass === "") {
-                alert("Por favor rellena los campos");
-                return;
-            }
-            usuariosDB.push({ user: nuevoUser, pass: nuevoPass, tipo: 'empleado' });
-            alert('¡Usuario ' + nuevoUser + ' registrado con éxito!');
-            navigateTo('sec-login');
-        }
-
-        function login() {
-            const uInput = document.getElementById('username').value;
-            const pInput = document.getElementById('password').value;
-            const usuarioEncontrado = usuariosDB.find(u => u.user === uInput && u.pass === pInput);
-
-            if (usuarioEncontrado) {
-                document.getElementById('login-error').classList.add('hidden');
-                document.getElementById('msg-bienvenida').innerText = "Bienvenido/a, " + uInput;
-                navigateTo('sec-dashboard');
-                if(usuarioEncontrado.tipo === 'admin') {
-                    document.getElementById('reportes-btn').classList.remove('hidden');
-                } else {
-                    document.getElementById('reportes-btn').classList.add('hidden');
-                }
-            } else {
-                document.getElementById('login-error').classList.remove('hidden');
-            }
-        }
-
-        function logout() {
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            navigateTo('sec-login');
-        }
-
-        function regVenta() {
-            const p = document.getElementById('v-prod').value;
-            if(p) {
-                const li = document.createElement('li');
-                li.innerText = "Vendido: " + p;
-                document.getElementById('lista-ventas').appendChild(li);
-                alert("Venta guardada");
-            }
-        }
-
-        // FUNCIÓN DE REPARACIÓN CON FOTO Y VALORES (SIN TOCAR LOGIN)
-        function regRep() {
-            const c = document.getElementById('r-cli').value;
-            const m = document.getElementById('r-mod').value;
-            const v = document.getElementById('r-val-total').value || 0;
-            const a = document.getElementById('r-abono').value || 0;
-            const saldo = v - a;
-            const fotoInput = document.getElementById('r-foto');
-
-            if(c) {
-                const li = document.createElement('li');
-                let imgHtml = "";
-                
-                // Si hay foto, crear previsualización
-                if (fotoInput.files && fotoInput.files[0]) {
-                    const url = URL.createObjectURL(fotoInput.files[0]);
-                    imgHtml = `<img src="${url}" class="img-preview">`;
-                }
-
-                li.innerHTML = `${imgHtml} <strong>Cliente:</strong> ${c} | <strong>Reloj:</strong> ${m} <br> 
-                                Total: $${v} | Abono: $${a} | <span style="color:red">Saldo: $${saldo}</span>`;
-                
-                document.getElementById('lista-reps').appendChild(li);
-                alert("Reparación registrada");
-                
-                // Limpiar campos
-                document.getElementById('r-cli').value = "";
-                document.getElementById('r-mod').value = "";
-                document.getElementById('r-val-total').value = "";
-                document.getElementById('r-abono').value = "";
-                document.getElementById('r-foto').value = "";
-            }
-        }
-
-        function buscInv() {
-            let q = document.getElementById('busc-inv').value.toLowerCase();
-            let rows = document.querySelectorAll('#tab-inv tr');
-            rows.forEach((r, i) => {
-                if(i>0) r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
-            });
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

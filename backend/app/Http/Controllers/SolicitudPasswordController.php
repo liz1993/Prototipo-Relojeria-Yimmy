@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\SolicitudPassword;
+use App\Models\User;
+use Illuminate\Http\Request;
+
+class SolicitudPasswordController extends Controller
+{
+    /**
+     * Pública a propósito. Siempre responde el mismo mensaje exista o no el
+     * usuario, para no revelar qué nombres de usuario son válidos.
+     */
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'username' => ['required', 'string', 'max:255'],
+        ]);
+
+        $user = User::where('username', $data['username'])->first();
+
+        if ($user) {
+            $yaPendiente = SolicitudPassword::where('user_id', $user->id)->whereNull('atendida_en')->exists();
+            if (! $yaPendiente) {
+                SolicitudPassword::create(['user_id' => $user->id]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Si el usuario existe, quedó avisado el administrador para que te contacte.',
+        ]);
+    }
+
+    public function index()
+    {
+        return SolicitudPassword::with('user:id,name,username')
+            ->whereNull('atendida_en')
+            ->orderBy('created_at')
+            ->get();
+    }
+
+    public function atender(SolicitudPassword $solicitud)
+    {
+        $solicitud->update(['atendida_en' => now()]);
+
+        return response()->json($solicitud);
+    }
+}
