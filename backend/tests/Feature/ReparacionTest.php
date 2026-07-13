@@ -45,6 +45,19 @@ class ReparacionTest extends TestCase
         $response->assertCreated()->assertJsonPath('observaciones', 'Golpe en la caja, se revisa mecanismo.');
     }
 
+    public function test_cedula_can_be_set_at_creation_time(): void
+    {
+        $sucursal = Sucursal::factory()->create();
+        $empleado = User::factory()->empleado($sucursal)->create();
+
+        $response = $this->actingAs($empleado, 'sanctum')->postJson('/api/reparaciones', [
+            'cliente' => 'Cliente con cedula',
+            'cedula' => '1234567890',
+        ]);
+
+        $response->assertCreated()->assertJsonPath('cedula', '1234567890');
+    }
+
     public function test_admin_must_specify_sucursal_when_creating_a_reparacion(): void
     {
         $sucursal = Sucursal::factory()->create();

@@ -47,6 +47,7 @@ class ReparacionController extends Controller
 
         $rules = [
             'cliente' => ['required', 'string', 'max:255'],
+            'cedula' => ['nullable', 'string', 'max:50'],
             'telefono' => ['nullable', 'string', 'max:50'],
             'modelo' => ['nullable', 'string', 'max:255'],
             'valor_total' => ['nullable', 'numeric', 'min:0'],
@@ -104,6 +105,7 @@ class ReparacionController extends Controller
         if ($esAdmin) {
             $rules += [
                 'cliente' => ['required', 'string', 'max:255'],
+                'cedula' => ['nullable', 'string', 'max:50'],
                 'telefono' => ['nullable', 'string', 'max:50'],
                 'modelo' => ['nullable', 'string', 'max:255'],
                 'valor_total' => ['nullable', 'numeric', 'min:0'],

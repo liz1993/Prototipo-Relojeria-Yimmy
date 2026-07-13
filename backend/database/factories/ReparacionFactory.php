@@ -25,6 +25,7 @@ class ReparacionFactory extends Factory
             'sucursal_id' => Sucursal::factory(),
             'user_id' => User::factory(),
             'cliente' => fake()->name(),
+            'cedula' => fake()->numerify('##########'),
             'telefono' => fake()->numerify('##########'),
             'modelo' => fake()->words(2, true),
             'valor_total' => $valorTotal,

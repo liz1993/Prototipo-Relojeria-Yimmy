@@ -431,7 +431,7 @@ function renderResultadosConsulta(reps, q) {
         const lReloj = document.createElement('strong'); lReloj.textContent = 'Reloj:';
         texto.append(
             lId, document.createTextNode(' ' + r.id + ' | '),
-            lCliente, document.createTextNode(' ' + r.cliente + (r.telefono ? ' (' + r.telefono + ')' : '') + ' | '),
+            lCliente, document.createTextNode(' ' + r.cliente + (r.cedula ? ' — C.C. ' + r.cedula : '') + (r.telefono ? ' (' + r.telefono + ')' : '') + ' | '),
             lReloj, document.createTextNode(' ' + (r.modelo || '(sin especificar)')),
             document.createElement('br'),
             document.createTextNode(`Total: $${r.valor_total} | Abono: $${r.abono} | `)
@@ -826,7 +826,7 @@ function renderReparaciones() {
         const lCliente = document.createElement('strong'); lCliente.textContent = 'Cliente:';
         const lReloj = document.createElement('strong'); lReloj.textContent = 'Reloj:';
         texto.append(
-            lCliente, document.createTextNode(' ' + r.cliente + (r.telefono ? ' (' + r.telefono + ')' : '') + ' | '),
+            lCliente, document.createTextNode(' ' + r.cliente + (r.cedula ? ' — C.C. ' + r.cedula : '') + (r.telefono ? ' (' + r.telefono + ')' : '') + ' | '),
             lReloj, document.createTextNode(' ' + (r.modelo || '')),
             document.createElement('br'),
             document.createTextNode(`Total: $${r.valor_total} | Abono: $${r.abono} | `)
@@ -835,6 +835,7 @@ function renderReparaciones() {
         saldoSpan.style.color = 'red';
         saldoSpan.textContent = `Saldo: $${r.saldo}`;
         texto.appendChild(saldoSpan);
+        if (r.sucursal) texto.appendChild(document.createTextNode(' — Sede: ' + r.sucursal.nombre));
         if (r.user) texto.appendChild(document.createTextNode(' — registrado por ' + r.user.username));
         contenido.appendChild(texto);
 
@@ -932,6 +933,7 @@ function editarReparacion(item) {
     reparacionEditando = item;
     document.getElementById('r-edit-id').value = item.id;
     document.getElementById('r-cli').value = item.cliente;
+    document.getElementById('r-cedula').value = item.cedula || '';
     document.getElementById('r-tel').value = item.telefono || '';
     document.getElementById('r-mod').value = item.modelo || '';
     document.getElementById('r-val-total').value = item.valor_total;
@@ -960,6 +962,7 @@ async function regRep() {
     const editId = document.getElementById('r-edit-id').value;
     const formData = new FormData();
     formData.append('cliente', c);
+    formData.append('cedula', document.getElementById('r-cedula').value);
     formData.append('telefono', document.getElementById('r-tel').value);
     formData.append('modelo', document.getElementById('r-mod').value);
     formData.append('valor_total', document.getElementById('r-val-total').value || 0);

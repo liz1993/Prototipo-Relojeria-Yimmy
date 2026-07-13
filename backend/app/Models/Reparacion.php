@@ -22,6 +22,7 @@ class Reparacion extends Model
 
     protected $fillable = [
         'cliente',
+        'cedula',
         'telefono',
         'modelo',
         'valor_total',
