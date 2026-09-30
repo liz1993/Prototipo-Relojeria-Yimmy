@@ -3,23 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reparacion;
+use App\Models\Sucursal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Reparaciones. Es el único recurso donde un empleado puede escribir sobre
  * un registro que no creó él mismo (para mover el estado / dejar
  * observaciones) -- por eso update() valida "a mano" la sucursal del
- * registro (ver el comentario ahí abajo).
+ * registro (ver el comentario ahí abajo). También respeta "modulo"
+ * (relojería/joyería, ver Sucursal::permiteModulo): reparar un reloj y
+ * ajustar una joya son dos rubros que no se mezclan.
  */
 class ReparacionController extends Controller
 {
     /** Flujo de estados por el que pasa una reparación, en orden. */
     public const ESTADOS = ['pendiente', 'en_proceso', 'listo', 'entregado'];
 
-    /** Lista reparaciones. "buscar" filtra por nombre de cliente (parcial) o por id exacto si es numérico -- lo usa también Consulta de Estado. */
+    /** Lista reparaciones, filtradas por módulo. "buscar" filtra por nombre de cliente (parcial) o por id exacto si es numérico -- lo usa también Consulta de Estado. */
     public function index(Request $request)
     {
-        $query = Reparacion::with(['user:id,name,username', 'sucursal:id,nombre'])->orderByDesc('id');
+        $query = Reparacion::with(['user:id,name,username', 'sucursal:id,nombre'])
+            ->where('modulo', $request->query('modulo', 'relojeria'))
+            ->orderByDesc('id');
         $user = $request->user();
 
         if ($user->tipo !== 'admin') {
@@ -55,6 +62,7 @@ class ReparacionController extends Controller
             'fecha' => ['nullable', 'date'],
             'foto' => ['nullable', 'image', 'max:4096'],
             'observaciones' => ['nullable', 'string'],
+            'modulo' => ['nullable', 'in:relojeria,joyeria'],
         ];
         if ($user->tipo === 'admin') {
             $rules['sucursal_id'] = ['required', 'integer', 'exists:sucursales,id'];
@@ -69,6 +77,11 @@ class ReparacionController extends Controller
         $data['sucursal_id'] = $user->tipo === 'admin' ? $data['sucursal_id'] : $user->sucursal_id;
         $data['user_id'] = $user->id;
         $data['estado'] = 'pendiente';
+        $data['modulo'] = $data['modulo'] ?? 'relojeria';
+
+        if (! Sucursal::permiteModulo($data['sucursal_id'], $data['modulo'])) {
+            throw ValidationException::withMessages(['modulo' => 'Esta sucursal no tiene habilitado el módulo de Joyería.']);
+        }
 
         $reparacion = Reparacion::create($data);
 
@@ -117,11 +130,19 @@ class ReparacionController extends Controller
 
         $data = $request->validate($rules);
 
+        $fotoAnterior = $reparacion->foto;
+
         if ($esAdmin && $request->hasFile('foto')) {
             $data['foto'] = $request->file('foto')->store('reparaciones', 'public');
         }
 
         $reparacion->update($data);
+
+        // Se borra después de guardar (no antes), para no perder la foto
+        // vieja si la validación o el update fallaran a mitad de camino.
+        if ($esAdmin && $request->hasFile('foto') && $fotoAnterior) {
+            Storage::disk('public')->delete($fotoAnterior);
+        }
 
         return response()->json($reparacion);
     }

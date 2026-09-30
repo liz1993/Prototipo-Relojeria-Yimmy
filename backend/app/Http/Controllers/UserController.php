@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Gestión de usuarios (solo admin): crear cuentas, ascender a admin,
@@ -31,16 +32,40 @@ class UserController extends Controller
             'sucursal_id' => ['required_if:tipo,empleado', 'nullable', 'integer', 'exists:sucursales,id'],
         ]);
 
+        $email = $data['username'].'@relojeriajimmy.local';
+
+        // El username ya se validó único arriba, pero el email autogenerado a
+        // partir de él podría chocar con el de alguien que se autoregistró
+        // (público, vía /register) con ese correo exacto -- sin este chequeo,
+        // el create() de abajo tira un 500 crudo en vez de un 422 claro.
+        if (User::where('email', $email)->exists()) {
+            throw ValidationException::withMessages([
+                'username' => 'Ya existe una cuenta con un correo equivalente a este nombre de usuario.',
+            ]);
+        }
+
         $user = User::create([
             'name' => $data['name'],
             'username' => $data['username'],
-            'email' => $data['username'].'@relojeriajimmy.local',
+            'email' => $email,
             'password' => Hash::make($data['password']),
             'tipo' => $data['tipo'],
+            // A diferencia del autoregistro público (AuthController::register), un
+            // usuario creado a mano por un admin ya está vetted -- no necesita
+            // pasar por el flujo de aprobación.
+            'aprobado' => true,
             'sucursal_id' => $data['tipo'] === 'admin' ? null : $data['sucursal_id'],
         ]);
 
         return response()->json($user->load('sucursal:id,nombre'), 201);
+    }
+
+    /** Aprueba una cuenta creada por autoregistro público, para que pueda iniciar sesión. */
+    public function aprobar(User $user)
+    {
+        $user->update(['aprobado' => true]);
+
+        return response()->json($user->load('sucursal:id,nombre'));
     }
 
     /** Edita un usuario. La contraseña solo cambia si se manda una nueva (nullable). */
@@ -53,6 +78,15 @@ class UserController extends Controller
             'tipo' => ['required', Rule::in(['admin', 'empleado'])],
             'sucursal_id' => ['required_if:tipo,empleado', 'nullable', 'integer', 'exists:sucursales,id'],
         ]);
+
+        // Si se está degradando al único admin que queda, se bloquea: de lo
+        // contrario nadie podría volver a entrar a las pantallas de admin
+        // (Usuarios, Sucursales, Reportes, etc.) para deshacer el cambio.
+        if ($user->tipo === 'admin' && $data['tipo'] !== 'admin' && User::where('tipo', 'admin')->count() <= 1) {
+            throw ValidationException::withMessages([
+                'tipo' => 'No se puede quitar el único administrador del sistema.',
+            ]);
+        }
 
         $user->name = $data['name'];
         $user->username = $data['username'];

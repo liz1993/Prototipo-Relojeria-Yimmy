@@ -24,7 +24,15 @@ class Sucursal extends Model
         'nombre',
         'direccion',
         'telefono',
+        'joyeria_habilitada',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'joyeria_habilitada' => 'boolean',
+        ];
+    }
 
     public function usuarios(): HasMany
     {
@@ -44,5 +52,20 @@ class Sucursal extends Model
     public function reparaciones(): HasMany
     {
         return $this->hasMany(Reparacion::class);
+    }
+
+    public function movimientos(): HasMany
+    {
+        return $this->hasMany(Movimiento::class);
+    }
+
+    /** Relojería siempre está permitida; Joyería solo si la sucursal la tiene habilitada. */
+    public static function permiteModulo(int $sucursalId, string $modulo): bool
+    {
+        if ($modulo === 'relojeria') {
+            return true;
+        }
+
+        return (bool) static::where('id', $sucursalId)->value('joyeria_habilitada');
     }
 }

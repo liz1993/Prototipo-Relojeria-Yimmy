@@ -151,14 +151,14 @@ class SucursalScopingTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_empleado_cannot_delete_ventas_or_reparaciones(): void
+    public function test_empleado_cannot_delete_reparaciones(): void
     {
+        // A diferencia de Ventas (ver VentaTest), borrar una Reparación sigue
+        // siendo solo para admin -- el empleado únicamente puede mover su estado.
         $centro = Sucursal::factory()->create();
         $empleado = User::factory()->empleado($centro)->create();
-        $venta = Venta::factory()->for($centro)->create();
         $reparacion = Reparacion::factory()->for($centro)->create();
 
-        $this->actingAs($empleado, 'sanctum')->deleteJson("/api/ventas/{$venta->id}")->assertStatus(403);
         $this->actingAs($empleado, 'sanctum')->deleteJson("/api/reparaciones/{$reparacion->id}")->assertStatus(403);
     }
 
@@ -169,9 +169,29 @@ class SucursalScopingTest extends TestCase
 
         $this->actingAs($empleado, 'sanctum')->getJson('/api/usuarios')->assertStatus(403);
         $this->actingAs($empleado, 'sanctum')->getJson('/api/reportes')->assertStatus(403);
-        $this->actingAs($empleado, 'sanctum')->getJson('/api/cierres')->assertStatus(403);
+        // /cierres (index) ya no es admin-only -- ver test_empleado_can_see_cierres_index_scoped_to_own_sucursal:
+        // el empleado lo necesita para el gráfico de ventas del dashboard. exportar/detalle siguen siendo admin-only.
+        $this->actingAs($empleado, 'sanctum')->getJson('/api/cierres/exportar?desde=2026-01-01&hasta=2026-01-31')->assertStatus(403);
+        $this->actingAs($empleado, 'sanctum')->getJson('/api/cierres/2026-01-01')->assertStatus(403);
         $this->actingAs($empleado, 'sanctum')->getJson('/api/papelera')->assertStatus(403);
         $this->actingAs($empleado, 'sanctum')->getJson('/api/backup/exportar')->assertStatus(403);
         $this->actingAs($empleado, 'sanctum')->postJson('/api/sucursales', ['nombre' => 'Nueva'])->assertStatus(403);
+    }
+
+    public function test_empleado_can_see_cierres_index_scoped_to_own_sucursal(): void
+    {
+        // No es admin-only (a diferencia de exportar/detalle): el empleado lo
+        // necesita para el gráfico de ventas de su sucursal en el dashboard.
+        $centro = Sucursal::factory()->create();
+        $norte = Sucursal::factory()->create();
+        $empleado = User::factory()->empleado($centro)->create();
+
+        Venta::factory()->for($centro)->create(['fecha' => now()->toDateString(), 'valor' => 100]);
+        Venta::factory()->for($norte)->create(['fecha' => now()->toDateString(), 'valor' => 500]);
+
+        $response = $this->actingAs($empleado, 'sanctum')->getJson('/api/cierres');
+
+        $response->assertOk()->assertJsonCount(1);
+        $this->assertSame(100.0, (float) $response->json('0.total'));
     }
 }

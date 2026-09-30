@@ -33,6 +33,7 @@ class Reparacion extends Model
         'observaciones',
         'user_id',
         'sucursal_id',
+        'modulo',
     ];
 
     protected $appends = [

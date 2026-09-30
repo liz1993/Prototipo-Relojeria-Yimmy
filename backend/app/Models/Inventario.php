@@ -32,6 +32,7 @@ class Inventario extends Model
         'costo',
         'foto',
         'sucursal_id',
+        'modulo',
     ];
 
     // "foto_url" no es una columna real: se calcula al vuelo (ver

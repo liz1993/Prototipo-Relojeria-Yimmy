@@ -11,18 +11,19 @@ class BackupController extends Controller
      * Genera un dump SQL completo (estructura + datos) en PHP puro, sin
      * depender de que el binario `mysqldump` esté disponible/en el PATH —
      * así funciona igual en este XAMPP local que en cualquier hosting real.
+     * Soporta MySQL y SQLite (el driver por defecto de este proyecto) porque
+     * cada uno expone el esquema de forma distinta (SHOW CREATE TABLE vs.
+     * sqlite_master).
      */
     public function exportar()
     {
-        $dbName = DB::getDatabaseName();
-        $tablas = collect(DB::select('SHOW TABLES'))
-            ->map(fn ($fila) => array_values((array) $fila)[0]);
+        $driver = DB::connection()->getDriverName();
+        $dbName = $driver === 'sqlite' ? 'database' : DB::getDatabaseName();
 
         $sql = "-- Backup de \"{$dbName}\" generado el ".now()->toDateTimeString()."\n\n";
-        $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
+        $sql .= $driver === 'sqlite' ? "PRAGMA foreign_keys=OFF;\n\n" : "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
-        foreach ($tablas as $tabla) {
-            $create = DB::select("SHOW CREATE TABLE `{$tabla}`")[0]->{'Create Table'};
+        foreach ($this->tablasYCreates($driver) as $tabla => $create) {
             $sql .= "DROP TABLE IF EXISTS `{$tabla}`;\n{$create};\n\n";
 
             // Tablas chicas (prototipo de una relojería, no millones de filas):
@@ -44,7 +45,7 @@ class BackupController extends Controller
             $sql .= "\n";
         }
 
-        $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
+        $sql .= $driver === 'sqlite' ? "PRAGMA foreign_keys=ON;\n" : "SET FOREIGN_KEY_CHECKS=1;\n";
 
         $nombreArchivo = "backup_{$dbName}_".now()->format('Y-m-d_His').'.sql';
 
@@ -52,5 +53,28 @@ class BackupController extends Controller
             'Content-Type' => 'application/sql; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$nombreArchivo}\"",
         ]);
+    }
+
+    /** Mapa "nombre de tabla" -> sentencia CREATE TABLE, según el driver activo. */
+    private function tablasYCreates(string $driver): array
+    {
+        if ($driver === 'sqlite') {
+            return DB::table('sqlite_master')
+                ->where('type', 'table')
+                ->whereNotNull('sql')
+                ->where('name', 'not like', 'sqlite_%')
+                ->pluck('sql', 'name')
+                ->all();
+        }
+
+        $tablas = collect(DB::select('SHOW TABLES'))
+            ->map(fn ($fila) => array_values((array) $fila)[0]);
+
+        $creates = [];
+        foreach ($tablas as $tabla) {
+            $creates[$tabla] = DB::select("SHOW CREATE TABLE `{$tabla}`")[0]->{'Create Table'};
+        }
+
+        return $creates;
     }
 }

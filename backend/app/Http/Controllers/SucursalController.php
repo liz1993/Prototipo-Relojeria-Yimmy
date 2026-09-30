@@ -26,6 +26,7 @@ class SucursalController extends Controller
             'nombre' => ['required', 'string', 'max:255'],
             'direccion' => ['nullable', 'string', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:50'],
+            'joyeria_habilitada' => ['nullable', 'boolean'],
         ]);
 
         $sucursal = Sucursal::create($data);
@@ -33,14 +34,18 @@ class SucursalController extends Controller
         return response()->json($sucursal, 201);
     }
 
-    /** Edita nombre/dirección/teléfono de una sucursal existente. */
+    /** Edita nombre/dirección/teléfono/permiso de joyería de una sucursal existente. */
     public function update(Request $request, Sucursal $sucursal)
     {
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'direccion' => ['nullable', 'string', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:50'],
+            'joyeria_habilitada' => ['nullable', 'boolean'],
         ]);
+        // Checkbox ausente en el form = "false" -- sin esto, desmarcarlo y guardar
+        // no lo apagaría (el campo simplemente no llegaría en el request).
+        $data['joyeria_habilitada'] = $request->boolean('joyeria_habilitada');
 
         $sucursal->update($data);
 

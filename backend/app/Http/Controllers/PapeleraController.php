@@ -7,6 +7,8 @@ use App\Models\Reparacion;
 use App\Models\Sucursal;
 use App\Models\Venta;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Papelera de reciclaje: junta en una sola lista todo lo que se "eliminó"
@@ -71,10 +73,47 @@ class PapeleraController extends Controller
     {
         abort_unless(array_key_exists($tipo, self::TIPOS), 404);
 
+        if ($tipo === 'ventas') {
+            return $this->restaurarVenta($id);
+        }
+
         $modelo = self::TIPOS[$tipo];
         $item = $modelo::onlyTrashed()->findOrFail($id);
         $item->restore();
 
         return response()->json($item);
+    }
+
+    /**
+     * Restaurar una venta ligada a inventario debe volver a descontar el
+     * stock: VentaController::destroy() se lo había devuelto al borrarla, así
+     * que sin este paso quedaría "stock fantasma" (la venta activa de nuevo,
+     * pero el stock nunca vuelve a bajar). Si ya no alcanza, se bloquea la
+     * restauración en vez de dejar el stock en negativo.
+     */
+    private function restaurarVenta(int $id)
+    {
+        return DB::transaction(function () use ($id) {
+            $venta = Venta::onlyTrashed()->findOrFail($id);
+
+            if ($venta->inventario_id) {
+                $item = Inventario::lockForUpdate()->find($venta->inventario_id);
+                $cantidad = $venta->cantidad ?? 1;
+
+                if ($item) {
+                    if ($item->cantidad < $cantidad) {
+                        throw ValidationException::withMessages([
+                            'cantidad' => "No se puede restaurar: solo quedan {$item->cantidad} unidades de \"{$item->descripcion}\" en stock.",
+                        ]);
+                    }
+
+                    $item->decrement('cantidad', $cantidad);
+                }
+            }
+
+            $venta->restore();
+
+            return response()->json($venta);
+        });
     }
 }

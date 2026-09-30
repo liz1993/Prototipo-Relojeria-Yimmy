@@ -27,6 +27,10 @@ class Venta extends Model
         'inventario_id',
         'user_id',
         'sucursal_id',
+        'modulo',
+        'tipo',
+        'metodo_pago',
+        'observaciones',
     ];
 
     protected function casts(): array

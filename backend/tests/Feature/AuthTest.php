@@ -78,7 +78,48 @@ class AuthTest extends TestCase
             'email' => 'nuevo_empleado@example.com',
             'tipo' => 'empleado',
             'sucursal_id' => $sucursal->id,
+            // El autoregistro público queda pendiente de aprobación de un admin.
+            'aprobado' => false,
         ]);
+    }
+
+    public function test_unapproved_user_cannot_login(): void
+    {
+        $sucursal = Sucursal::factory()->create();
+        $this->postJson('/api/register', [
+            'username' => 'pendiente',
+            'email' => 'pendiente@example.com',
+            'password' => 'secreto',
+            'sucursal_id' => $sucursal->id,
+        ]);
+
+        $response = $this->postJson('/api/login', [
+            'email' => 'pendiente@example.com',
+            'password' => 'secreto',
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_register_is_throttled_after_repeated_attempts(): void
+    {
+        $sucursal = Sucursal::factory()->create();
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson('/api/register', [
+                'username' => "usuario_{$i}",
+                'email' => "usuario_{$i}@example.com",
+                'password' => '123',
+                'sucursal_id' => $sucursal->id,
+            ])->assertCreated();
+        }
+
+        $this->postJson('/api/register', [
+            'username' => 'usuario_extra',
+            'email' => 'usuario_extra@example.com',
+            'password' => '123',
+            'sucursal_id' => $sucursal->id,
+        ])->assertStatus(429);
     }
 
     public function test_register_rejects_duplicate_username(): void

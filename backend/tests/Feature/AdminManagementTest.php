@@ -64,6 +64,68 @@ class AdminManagementTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $userId, 'tipo' => 'admin', 'sucursal_id' => null]);
     }
 
+    public function test_admin_cannot_demote_the_only_admin(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin, 'sanctum')->putJson("/api/usuarios/{$admin->id}", [
+            'name' => $admin->name,
+            'username' => $admin->username,
+            'tipo' => 'empleado',
+            'sucursal_id' => Sucursal::factory()->create()->id,
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('tipo');
+        $this->assertDatabaseHas('users', ['id' => $admin->id, 'tipo' => 'admin']);
+    }
+
+    public function test_admin_can_demote_an_admin_when_another_admin_remains(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $otroAdmin = User::factory()->admin()->create();
+        $sucursal = Sucursal::factory()->create();
+
+        $response = $this->actingAs($admin, 'sanctum')->putJson("/api/usuarios/{$otroAdmin->id}", [
+            'name' => $otroAdmin->name,
+            'username' => $otroAdmin->username,
+            'tipo' => 'empleado',
+            'sucursal_id' => $sucursal->id,
+        ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('users', ['id' => $otroAdmin->id, 'tipo' => 'empleado']);
+    }
+
+    public function test_creating_user_with_colliding_synthesized_email_is_rejected(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $sucursal = Sucursal::factory()->create();
+        // Alguien ya se autoregistró (público) con este correo exacto.
+        User::factory()->create(['email' => 'colisiona@relojeriajimmy.local']);
+
+        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/usuarios', [
+            'name' => 'Nuevo',
+            'username' => 'colisiona',
+            'password' => '123',
+            'tipo' => 'empleado',
+            'sucursal_id' => $sucursal->id,
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('username');
+    }
+
+    public function test_admin_can_approve_a_pending_self_registered_user(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $sucursal = Sucursal::factory()->create();
+        $pendiente = User::factory()->empleado($sucursal)->create(['aprobado' => false]);
+
+        $response = $this->actingAs($admin, 'sanctum')->postJson("/api/usuarios/{$pendiente->id}/aprobar");
+
+        $response->assertOk()->assertJsonPath('aprobado', true);
+        $this->assertDatabaseHas('users', ['id' => $pendiente->id, 'aprobado' => true]);
+    }
+
     public function test_empleado_type_user_requires_a_sucursal(): void
     {
         $admin = User::factory()->admin()->create();
@@ -138,6 +200,15 @@ class AdminManagementTest extends TestCase
         $this->postJson('/api/olvide-password', ['username' => 'empleado_centro']);
 
         $this->assertDatabaseCount('solicitudes_password', 1);
+    }
+
+    public function test_olvide_password_is_throttled_after_repeated_attempts(): void
+    {
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson('/api/olvide-password', ['username' => 'no-existe'])->assertOk();
+        }
+
+        $this->postJson('/api/olvide-password', ['username' => 'no-existe'])->assertStatus(429);
     }
 
     public function test_admin_can_list_and_atender_solicitudes(): void

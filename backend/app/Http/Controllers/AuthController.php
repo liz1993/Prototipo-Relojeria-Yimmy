@@ -26,6 +26,13 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales incorrectas.'], 401);
         }
 
+        // Se chequea después de validar la contraseña (no antes), para no revelar
+        // si una cuenta está pendiente de aprobación a alguien que ni siquiera
+        // sabe la contraseña correcta.
+        if (! $user->aprobado) {
+            return response()->json(['message' => 'Tu cuenta todavía no fue aprobada por un administrador.'], 403);
+        }
+
         $token = $user->createToken('web')->plainTextToken;
 
         return response()->json([
@@ -46,16 +53,21 @@ class AuthController extends Controller
         ]);
 
         $user = User::create([
-            'name' => $data['name'] ?: $data['username'],
+            // "name" es nullable: si el cliente no manda esa clave para nada (no
+            // solo vacía), $data ni siquiera la trae -- ?? evita el "undefined
+            // array key" que ?: no cubre en ese caso.
+            'name' => ($data['name'] ?? null) ?: $data['username'],
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'tipo' => 'empleado',
+            'aprobado' => false,
             'sucursal_id' => $data['sucursal_id'],
         ]);
 
         return response()->json([
             'user' => $this->formatUser($user),
+            'message' => 'Cuenta creada. Un administrador debe aprobarla antes de que puedas iniciar sesión.',
         ], 201);
     }
 
@@ -76,14 +88,18 @@ class AuthController extends Controller
     /** Da forma consistente a la info del usuario que se manda al frontend. */
     private function formatUser(User $user): array
     {
-        $user->loadMissing('sucursal:id,nombre');
+        $user->loadMissing('sucursal:id,nombre,joyeria_habilitada');
 
         return [
             'id' => $user->id,
             'name' => $user->name,
             'username' => $user->username,
             'tipo' => $user->tipo,
-            'sucursal' => $user->sucursal ? ['id' => $user->sucursal->id, 'nombre' => $user->sucursal->nombre] : null,
+            'sucursal' => $user->sucursal ? [
+                'id' => $user->sucursal->id,
+                'nombre' => $user->sucursal->nombre,
+                'joyeria_habilitada' => $user->sucursal->joyeria_habilitada,
+            ] : null,
         ];
     }
 }

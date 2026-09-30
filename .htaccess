@@ -1,0 +1,11 @@
+# Este es un prototipo en desarrollo activo: index.html/script.js/styles.css
+# cambian seguido. Sin esto, Apache no manda ningún header de caché y Chrome
+# aplica caché heurístico (sirve una copia vieja desde disco sin revalidar
+# con el servidor), lo que hace que el navegador quede con JS/HTML
+# desactualizado después de editar los archivos. Se fuerza revalidación en
+# cada carga para evitar eso.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html|js|css)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>

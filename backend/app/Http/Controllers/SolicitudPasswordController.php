@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SolicitudPassword;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /** Flujo de "olvidé mi contraseña": el usuario avisa, el admin lo atiende a mano. Ver SolicitudPassword y UserController. */
 class SolicitudPasswordController extends Controller
@@ -19,14 +20,19 @@ class SolicitudPasswordController extends Controller
             'username' => ['required', 'string', 'max:255'],
         ]);
 
-        $user = User::where('username', $data['username'])->first();
+        // lockForUpdate + transacción: sin esto, dos solicitudes casi simultáneas
+        // para el mismo usuario pueden pasar el chequeo "¿ya hay pendiente?" antes
+        // de que la otra alcance a crear su registro, y quedan dos pendientes.
+        DB::transaction(function () use ($data) {
+            $user = User::where('username', $data['username'])->lockForUpdate()->first();
 
-        if ($user) {
-            $yaPendiente = SolicitudPassword::where('user_id', $user->id)->whereNull('atendida_en')->exists();
-            if (! $yaPendiente) {
-                SolicitudPassword::create(['user_id' => $user->id]);
+            if ($user) {
+                $yaPendiente = SolicitudPassword::where('user_id', $user->id)->whereNull('atendida_en')->exists();
+                if (! $yaPendiente) {
+                    SolicitudPassword::create(['user_id' => $user->id]);
+                }
             }
-        }
+        });
 
         return response()->json([
             'message' => 'Si el usuario existe, quedó avisado el administrador para que te contacte.',

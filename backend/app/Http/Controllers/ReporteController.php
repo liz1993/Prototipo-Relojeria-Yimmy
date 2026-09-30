@@ -21,16 +21,26 @@ class ReporteController extends Controller
         $esMes = $request->query('periodo') === 'mes';
         $inicioMes = now()->startOfMonth();
         $sucursalId = $request->query('sucursal_id');
+        $modulo = $request->query('modulo', 'relojeria');
 
-        $ventasQuery = Venta::query();
-        $reparacionesQuery = Reparacion::query();
-        $inventarioQuery = Inventario::query();
+        // "ventas.modulo" calificado: el cálculo de costo_estimado más abajo hace
+        // join con "inventario", que también tiene columna "modulo" -- sin calificar
+        // sería ambigua igual que ya pasaba con "sucursal_id" (ver comentario abajo).
+        $ventasQuery = Venta::query()->where('ventas.modulo', $modulo);
+        $reparacionesQuery = Reparacion::query()->where('modulo', $modulo);
+        $inventarioQuery = Inventario::query()->where('modulo', $modulo);
         if ($esMes) {
-            // "ventas.created_at" calificado a propósito: el cálculo de costo_estimado
+            // Se filtra por "fecha" (la fecha real de la venta/reparación, editable
+            // por el usuario) y no por "created_at" (cuándo se guardó el registro),
+            // para que coincida con Cierres Diarios y no se desincronice si alguien
+            // corrige la fecha de un registro después de crearlo.
+            // "ventas.fecha" calificado a propósito: el cálculo de costo_estimado
             // más abajo hace un join con "inventario", y esa tabla también tiene
             // sucursal_id — sin calificar, el where quedaría ambiguo entre las dos.
-            $ventasQuery->where('ventas.created_at', '>=', $inicioMes);
-            $reparacionesQuery->where('created_at', '>=', $inicioMes);
+            // whereDate (no where a secas): "fecha" es una columna DATE, y comparar
+            // con un datetime completo ("...00:00:00") como string rompería el orden.
+            $ventasQuery->whereDate('ventas.fecha', '>=', $inicioMes->toDateString());
+            $reparacionesQuery->whereDate('fecha', '>=', $inicioMes->toDateString());
         }
         if ($sucursalId) {
             $ventasQuery->where('ventas.sucursal_id', $sucursalId);
@@ -59,6 +69,7 @@ class ReporteController extends Controller
         $respuesta = [
             'periodo' => $esMes ? 'mes' : 'todo',
             'sucursal_id' => $sucursalId ? (int) $sucursalId : null,
+            'modulo' => $modulo,
             'ventas' => [
                 'cantidad' => (clone $ventasQuery)->count(),
                 'total' => $totalVentas,
@@ -85,12 +96,12 @@ class ReporteController extends Controller
         ];
 
         if (! $sucursalId) {
-            $respuesta['por_sucursal'] = Sucursal::orderBy('nombre')->get()->map(function (Sucursal $sucursal) use ($esMes, $inicioMes) {
-                $ventas = Venta::where('sucursal_id', $sucursal->id);
-                $reparaciones = Reparacion::where('sucursal_id', $sucursal->id);
+            $respuesta['por_sucursal'] = Sucursal::orderBy('nombre')->get()->map(function (Sucursal $sucursal) use ($esMes, $inicioMes, $modulo) {
+                $ventas = Venta::where('sucursal_id', $sucursal->id)->where('modulo', $modulo);
+                $reparaciones = Reparacion::where('sucursal_id', $sucursal->id)->where('modulo', $modulo);
                 if ($esMes) {
-                    $ventas->where('created_at', '>=', $inicioMes);
-                    $reparaciones->where('created_at', '>=', $inicioMes);
+                    $ventas->whereDate('fecha', '>=', $inicioMes->toDateString());
+                    $reparaciones->whereDate('fecha', '>=', $inicioMes->toDateString());
                 }
 
                 return [
@@ -98,7 +109,7 @@ class ReporteController extends Controller
                     'nombre' => $sucursal->nombre,
                     'ventas_total' => $ventas->sum('valor'),
                     'reparaciones_pendientes' => (clone $reparaciones)->where('estado', '!=', 'entregado')->count(),
-                    'productos' => Inventario::where('sucursal_id', $sucursal->id)->count(),
+                    'productos' => Inventario::where('sucursal_id', $sucursal->id)->where('modulo', $modulo)->count(),
                 ];
             });
         }

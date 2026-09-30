@@ -68,6 +68,22 @@ class ReporteTest extends TestCase
         $this->assertSame(80.0, (float) $response->json('inventario.costo_total'));
     }
 
+    public function test_periodo_mes_filters_by_fecha_not_created_at(): void
+    {
+        $sucursal = Sucursal::factory()->create();
+        $admin = User::factory()->admin()->create();
+        // "created_at" queda en hoy (default de factory/timestamps) para las dos,
+        // pero "fecha" (el dato de negocio real, editable) difiere: si el filtro
+        // usara created_at por error, las dos entrarían en "este mes".
+        Venta::factory()->for($sucursal)->create(['valor' => 100, 'fecha' => now()->subMonths(2)->toDateString()]);
+        Venta::factory()->for($sucursal)->create(['valor' => 50, 'fecha' => now()->toDateString()]);
+
+        $response = $this->actingAs($admin, 'sanctum')->getJson('/api/reportes?periodo=mes');
+
+        $response->assertOk();
+        $this->assertSame(50.0, (float) $response->json('ventas.total'));
+    }
+
     public function test_reportes_scoped_by_sucursal_id(): void
     {
         $centro = Sucursal::factory()->create();

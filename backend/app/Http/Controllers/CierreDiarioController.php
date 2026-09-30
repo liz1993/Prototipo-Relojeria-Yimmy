@@ -27,11 +27,37 @@ class CierreDiarioController extends Controller
         // modelo Venta convertiría el valor a un datetime completo si se
         // llamara igual que la columna, rompiendo el "YYYY-MM-DD" plano que
         // el frontend necesita para armar la ruta de detalle.
+        // total_nequi/total_efectivo separados a nivel de SQL (no restando en el
+        // frontend) para no arrastrar errores de redondeo de floats en JS.
         return $query
-            ->selectRaw('fecha as dia, COUNT(*) as cantidad_ventas, SUM(valor) as total')
+            ->selectRaw("fecha as dia, COUNT(*) as cantidad_ventas, SUM(valor) as total, SUM(CASE WHEN metodo_pago = 'nequi' THEN valor ELSE 0 END) as total_nequi, SUM(CASE WHEN metodo_pago = 'efectivo' THEN valor ELSE 0 END) as total_efectivo")
             ->groupBy('fecha')
             ->orderByDesc('fecha')
             ->get();
+    }
+
+    /**
+     * Cierre de HOY para la sucursal propia (empleado) o la elegida/todas
+     * (admin). A diferencia del resto de este controlador, no requiere ser
+     * admin: la empleada necesita ver esto para cuadrar caja al final del
+     * día, antes de que el dueño pase a recoger el efectivo.
+     */
+    public function hoy(Request $request)
+    {
+        $query = Venta::query();
+        $this->aplicarFiltros($query, $request);
+        $query->whereDate('fecha', now()->toDateString());
+
+        $total = (float) (clone $query)->sum('valor');
+        $totalNequi = (float) (clone $query)->where('metodo_pago', 'nequi')->sum('valor');
+
+        return response()->json([
+            'fecha' => now()->toDateString(),
+            'cantidad_ventas' => (clone $query)->count(),
+            'total' => $total,
+            'total_nequi' => $totalNequi,
+            'total_efectivo' => $total - $totalNequi,
+        ]);
     }
 
     /** Ventas de un día puntual, con detalle de cada una (quién la registró, en qué sucursal). */
@@ -51,9 +77,11 @@ class CierreDiarioController extends Controller
             'desde' => ['required', 'date'],
             'hasta' => ['required', 'date', 'after_or_equal:desde'],
             'sucursal_id' => ['nullable', 'integer', 'exists:sucursales,id'],
+            'modulo' => ['nullable', 'in:relojeria,joyeria'],
         ]);
 
         $query = Venta::with(['user:id,name,username', 'sucursal:id,nombre'])
+            ->where('modulo', $data['modulo'] ?? 'relojeria')
             ->whereDate('fecha', '>=', $data['desde'])
             ->whereDate('fecha', '<=', $data['hasta']);
         if (! empty($data['sucursal_id'])) {
@@ -66,9 +94,10 @@ class CierreDiarioController extends Controller
         return new StreamedResponse(function () use ($ventas) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF"); // BOM: para que Excel detecte UTF-8 y muestre bien los acentos
-            fputcsv($out, ['Fecha', 'Sucursal', 'Producto', 'Cantidad', 'Valor', 'Registrado por']);
+            fputcsv($out, ['Fecha', 'Sucursal', 'Producto', 'Cantidad', 'Valor', 'Método de pago', 'Registrado por']);
 
             $totalPorDia = [];
+            $nequiPorDia = [];
             foreach ($ventas as $venta) {
                 $fecha = optional($venta->fecha)->toDateString();
                 fputcsv($out, [
@@ -77,18 +106,25 @@ class CierreDiarioController extends Controller
                     $venta->producto,
                     $venta->cantidad ?? '',
                     $venta->valor ?? 0,
+                    $venta->metodo_pago === 'nequi' ? 'Nequi' : 'Efectivo',
                     $venta->user->username ?? '',
                 ]);
                 $totalPorDia[$fecha] = ($totalPorDia[$fecha] ?? 0) + (float) $venta->valor;
+                if ($venta->metodo_pago === 'nequi') {
+                    $nequiPorDia[$fecha] = ($nequiPorDia[$fecha] ?? 0) + (float) $venta->valor;
+                }
             }
 
             fputcsv($out, []);
-            fputcsv($out, ['Totales por día']);
+            fputcsv($out, ['Totales por día', '', '', '', 'Total', 'Nequi', 'Efectivo']);
             foreach ($totalPorDia as $fecha => $total) {
-                fputcsv($out, [$fecha, '', '', '', number_format($total, 2, '.', '')]);
+                $nequi = $nequiPorDia[$fecha] ?? 0;
+                fputcsv($out, [$fecha, '', '', '', number_format($total, 2, '.', ''), number_format($nequi, 2, '.', ''), number_format($total - $nequi, 2, '.', '')]);
             }
             fputcsv($out, []);
-            fputcsv($out, ['Total del periodo', '', '', '', number_format(array_sum($totalPorDia), 2, '.', '')]);
+            $totalPeriodo = array_sum($totalPorDia);
+            $nequiPeriodo = array_sum($nequiPorDia);
+            fputcsv($out, ['Total del periodo', '', '', '', number_format($totalPeriodo, 2, '.', ''), number_format($nequiPeriodo, 2, '.', ''), number_format($totalPeriodo - $nequiPeriodo, 2, '.', '')]);
 
             fclose($out);
         }, 200, [
@@ -97,10 +133,12 @@ class CierreDiarioController extends Controller
         ]);
     }
 
-    /** Filtro común a index/detalle: sucursal (forzada para empleado) y rango de fechas opcional. */
+    /** Filtro común a index/detalle: sucursal (forzada para empleado), módulo y rango de fechas opcional. */
     private function aplicarFiltros(Builder $query, Request $request): void
     {
         $user = $request->user();
+
+        $query->where('modulo', $request->query('modulo', 'relojeria'));
 
         if ($user->tipo !== 'admin') {
             $query->where('sucursal_id', $user->sucursal_id);
